@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grupos WhatsApp</title>
+    <!-- Script de Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Script de Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Conectar al servidor Socket.io
+        const socket = io();
+
+        // Escuchar el evento 'groups-updated' para actualizar la lista de grupos
+        socket.on('groups-updated', (groups) => {
+            const groupList = document.getElementById('group-list');
+            groupList.innerHTML = '';  // Limpiar la lista actual
+
+            // Agregar los grupos a la lista en la interfaz
+            if (groups.length > 0) {
+                groups.forEach(group => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${group.name} (ID: ${group.id})`;
+                    groupList.appendChild(listItem);
+                });
+            } else {
+                groupList.innerHTML = '<li>No se encontraron grupos</li>';
+            }
+        });
+
+        // Función que emite el evento 'send-msj' al servidor
+        const sendMessage = () => {
+            socket.emit('send-msj');  // Emitir evento 'send-msj' al servidor
+            console.log('Evento "send-msj" enviado');
+        };
+    </script>
+</head>
+<body x-data="{}">
+    <h1>Lista de Grupos WhatsApp</h1>
+
+    <!-- Botón para activar la función 'sendMessage' -->
+    <button @click="sendMessage()">Test my connection</button>
+
+    <ul id="group-list">
+        <!-- Los grupos se agregarán aquí dinámicamente -->
+    </ul>
+</body>
+</html>
