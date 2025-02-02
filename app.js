@@ -41,23 +41,35 @@ const getGroups = async () => {
     try {
         const mygroups = chats.filter(chat => chat.id.server === 'g.us')
 
+        const formatedGroups = await Promise.all(
+            mygroups.map(async (group) => {
+                try {
+                    const chat = await client.getChatById(group.id._serialized); // Obtener el chat
+                    if (chat.isReadOnly == false) {
+                        const contact = await chat.getContact(); // Obtener el contacto
+                        const profilePicUrl = await contact.getProfilePicUrl(); // Obtener la foto de perfil
 
-        // Obtener la URL de la foto de perfil
+                        return {
+                            name: group.name,
+                            id: group.id._serialized,
+                            profilePicUrl: profilePicUrl
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Error procesando el grupo ${group.id._serialized}:`, error);
+                    return null; // Devuelve null en caso de error
+                }
+            })
+        );
+
+        // Filtra los elementos que no son null o undefined
+        const filteredGroups = formatedGroups.filter(group => group != null);
+
+        return filteredGroups;
 
 
-        const formatedGroups = await Promise.all(mygroups.map(async (group) => {
-            const chat = await client.getChatById(group.id._serialized);  // Obtener el chat
-            const contact = await chat.getContact(); // Obtener el contacto
-            const profilePicUrl = await contact.getProfilePicUrl(); // Obtener la foto de perfil
 
-            return {
-                name: group.name,
-                id: group.id._serialized,
-                profilePicUrl: profilePicUrl
-            };
-        }));
 
-        return formatedGroups;
 
 
     } catch (error) {
@@ -67,24 +79,16 @@ const getGroups = async () => {
 };
 
 //Post
-let selectedGroups = [
-    "120363046353242256@g.us",
-    "120363204191113377@g.us",
-    "120363376835578475@g.us"
-];
-
-//programing
-
-//delete
-
-//handlemsj
 
 
-const sendMessage = () => {
 
-    const myMessage = "Hola, este mensaje viene de Node.JS";
 
-    selectedGroups.map(async groupID => {
+const sendMessage = (message) => {
+
+    const myMessage = message.body;
+    const recipients = message.recipients;
+
+    recipients.map(async groupID => {
         const group = groups.find(chat => chat.id === groupID);
 
         if (group) {
@@ -97,6 +101,33 @@ const sendMessage = () => {
     });
 
 }
+
+
+//programing
+
+//delete
+
+//handlemsj
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //Conexiones:
 
@@ -124,8 +155,8 @@ io.on('connection', (socket) => {
     socket.emit('groups-updated', groups);
 
 
-    socket.on('send-msj', () => {
-        sendMessage();
+    socket.on('send-msj', (myMessage) => {
+        sendMessage(myMessage);
     });
 
 
