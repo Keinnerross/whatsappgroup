@@ -11,6 +11,9 @@ const app = express();
 const server = http.createServer(app);
 const port = 3000;
 
+// ✅ Sirve la carpeta 'public' correctamente
+app.use(express.static('public'));
+
 // Motor de plantillas
 app.set('view engine', 'ejs');
 
@@ -31,7 +34,6 @@ const client = new Client({
 
 //Funciones (Controllers)
 
-
 //get
 let groups = [];
 const getGroups = async () => {
@@ -51,8 +53,14 @@ const getGroups = async () => {
 let selectedGroups = [
     "120363046353242256@g.us",
     "120363204191113377@g.us",
-    "120363376835578475@g.us"];
+    "120363376835578475@g.us"
+];
 
+//programing
+
+//delete
+
+//handlemsj
 
 
 const sendMessage = () => {

@@ -1,49 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grupos WhatsApp</title>
+    <!--Tailwind-->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- Script de Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Script de Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        // Conectar al servidor Socket.io
-        const socket = io();
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css">
+    <!-- Jquery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-        // Escuchar el evento 'groups-updated' para actualizar la lista de grupos
-        socket.on('groups-updated', (groups) => {
-            const groupList = document.getElementById('group-list');
-            groupList.innerHTML = '';  // Limpiar la lista actual
-
-            // Agregar los grupos a la lista en la interfaz
-            if (groups.length > 0) {
-                groups.forEach(group => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${group.name} (ID: ${group.id})`;
-                    groupList.appendChild(listItem);
-                });
-            } else {
-                groupList.innerHTML = '<li>No se encontraron grupos</li>';
-            }
-        });
-
-        // Función que emite el evento 'send-msj' al servidor
-        const sendMessage = () => {
-            socket.emit('send-msj');  // Emitir evento 'send-msj' al servidor
-            console.log('Evento "send-msj" enviado');
-        };
-    </script>
 </head>
-<body x-data="{}">
-    <h1>Lista de Grupos WhatsApp</h1>
 
-    <!-- Botón para activar la función 'sendMessage' -->
-    <button @click="sendMessage()">Test my connection</button>
+<body x-data="{message: ''}">
+    <header class="w-full bg-black text-white p-4 flex  flex-col justify-between items-center">
+        <nav>
+            <ul class="flex gap-4">
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/groups">Escanear QR</a></li>
+                <li><a href="/groups">Enviados</a></li>
+                <li><a href="/groups">Cerrar Sesión</a></li>
+            </ul>
+        </nav>
+        <div class="h-20 text-3xl font-bold flex items-center">
+            <h2>WhatsAppGroups</h2>
+        </div>
+    </header>
 
-    <ul id="group-list">
-        <!-- Los grupos se agregarán aquí dinámicamente -->
-    </ul>
+    <div class="flex flex-col items-center">
+        <div class="w-[400px] p-4 rounded-lg">
+            <div id="" class="">
+                <div class="h-[400px] overflow-y-scroll">
+
+                    <table id="groupTable" class="display ">
+                        <thead>
+                            <tr>
+                                <th class="hidden">Imagen del Grupo</th>
+                                <th class="hidden">Nombre del Grupo</th>
+                                <th class="hidden">Opciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody> <!-- Aquí se insertarán las filas dinámicamente -->
+                    </table>
+                </div>
+
+
+
+                <form  x-on:submit.prevent="console.log(message)"> 
+                    <input x-model="message" type="text" placeholder="Escribe un Mensaje" class="h-20"/>
+                    <div class="bg-blue-500 text-white p-2 rounded-md">
+                        <button type="submit" >Enviar</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
+    <script src="/js/getGroups.js"></script>
+
+
+
 </body>
+
 </html>
