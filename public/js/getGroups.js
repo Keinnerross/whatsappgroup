@@ -14,10 +14,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (groups.length > 0) {
             groups.forEach(group => {
+                const profilePicUrl = group.profilePicUrl;
+
                 table.row.add([
-                    '<img src="https://ui-avatars.com/api/?name=' + group.name + '&size=32" alt="' + group.name + '"/> ',
+                    `<div class="w-10 h-10 rounded-full overflow-hidden">
+                        <img src="${profilePicUrl}" alt="${group.name} class="object-cover" />
+                    </div>`,  
                     group.name,
-                    `<input type="radio"/>`,
+                    `<input type="radio"/>`
                 ]);
             });
         } else {

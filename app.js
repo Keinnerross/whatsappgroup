@@ -39,10 +39,27 @@ let groups = [];
 const getGroups = async () => {
     const chats = await client.getChats();
     try {
-        return chats.filter(chat => chat.id.server === 'g.us').map(group => ({
-            name: group.name,
-            id: group.id._serialized
+        const mygroups = chats.filter(chat => chat.id.server === 'g.us')
+
+
+        // Obtener la URL de la foto de perfil
+
+
+        const formatedGroups = await Promise.all(mygroups.map(async (group) => {
+            const chat = await client.getChatById(group.id._serialized);  // Obtener el chat
+            const contact = await chat.getContact(); // Obtener el contacto
+            const profilePicUrl = await contact.getProfilePicUrl(); // Obtener la foto de perfil
+
+            return {
+                name: group.name,
+                id: group.id._serialized,
+                profilePicUrl: profilePicUrl
+            };
         }));
+
+        return formatedGroups;
+
+
     } catch (error) {
         console.error('Error al obtener los grupos:', error);
         return [];
@@ -67,9 +84,9 @@ const sendMessage = () => {
 
     const myMessage = "Hola, este mensaje viene de Node.JS";
 
-    selectedGroups.map( async groupID => {
+    selectedGroups.map(async groupID => {
         const group = groups.find(chat => chat.id === groupID);
-      
+
         if (group) {
             await client.sendMessage(group.id, myMessage);
             console.log('Mensaje enviado al grupo:', group.name);
@@ -94,7 +111,7 @@ client.on('ready', async () => {
 
 
     groups = await getGroups();
-    console.log('Grupos obtenidos:', groups);
+    // console.log('Grupos obtenidos:', groups);
 
     io.emit('groups-updated', groups);
 });
