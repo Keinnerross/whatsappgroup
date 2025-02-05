@@ -22,53 +22,79 @@
 </head>
 
 <body x-data="services">
-    <header class="w-full bg-black text-white p-4 flex  flex-col justify-between items-center">
-        <nav>
-            <ul class="flex gap-4">
-                <li><a href="/">Inicio</a></li>
-                <li><a href="/groups">Escanear QR</a></li>
-                <li><a href="/groups">Enviados</a></li>
-                <li><a href="/groups">Cerrar Sesión</a></li>
-            </ul>
-        </nav>
-        <div class="h-20 text-3xl font-bold flex items-center">
-            <h2>WhatsAppGroups</h2>
-        </div>
-    </header>
+    <div id="ui-controllers" x-data="{ isQrOpen : false }">
 
-    <div class="flex flex-col items-center">
-        <div class="w-[400px] p-4 rounded-lg">
-            <div id="" class="">
-                <div class="h-[400px] overflow-y-scroll">
+        <header class="w-full bg-black text-white p-4 flex  flex-col justify-between items-center">
+            <nav>
+                <ul class="flex gap-4">
+                    <li><a href="/">Inicio</a></li>
+                    <li x-on:click="isQrOpen = true" class="cursor-pointer">Escanear QR</li>
+                    <li><a href="/groups">Enviados</a></li>
+                    <li><a href="/groups">Cerrar Sesión</a></li>
+                    <h2 id="status"></h2>
+                </ul>
+            </nav>
+            <div class="h-20 text-3xl font-bold flex items-center">
+                <h2>WhatsAppGroups</h2>
+            </div>
+        </header>
 
-                    <table id="groupTable" class="display ">
-                        <thead>
-                            <tr>
-                                <th class="hidden">Imagen del Grupo</th>
-                                <th class="hidden">Nombre del Grupo</th>
-                                <th class="hidden">Opciones</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody> <!-- Aquí se insertarán las filas dinámicamente -->
-                    </table>
+        <div x-show="isQrOpen" id="qr-container"
+            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+
+
+            <div class="w-[400px] h-[400px] bg-white rounded-lg p-4 flex justify-center items-center flex-col gap-4">
+                <div class="w-[250px] h-[250px] rounded-lg overflow-hidden">
+                    <img id="qrImage" src="" alt="qr" class="w-full h-full object-contain">
                 </div>
-
-
-
-                <form>
-                    <input x-model="message" type="text" placeholder="Escribe un Mensaje" class="h-20" />
-                    <div class="bg-blue-500 text-white p-2 rounded-md">
-                        <button type="submit" x-on:click.prevent="sendMessage(message)">Enviar</button>
-                    </div>
-                </form>
+                <span x-on:click="isQrOpen = false"
+                    class="px-2 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-md text-center">Entendido</span>
             </div>
 
         </div>
+
+
+
+
+        <!-- Content -->
+        <div class="flex flex-col items-center">
+            <div class="w-[400px] p-4 rounded-lg">
+                <div id="" class="">
+                    <div class="h-[400px] overflow-y-scroll">
+
+                        <table id="groupTable" class="display ">
+                            <thead>
+                                <tr>
+                                    <th class="hidden">Imagen del Grupo</th>
+                                    <th class="hidden">Nombre del Grupo</th>
+                                    <th class="hidden">Opciones</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody> <!-- Aquí se insertarán las filas dinámicamente -->
+                        </table>
+                    </div>
+
+
+
+                    <form x-data="{ message: '', files: null }" x-on:submit.prevent="sendMessage">
+                        <textarea x-model="message" placeholder="Escribe un Mensaje"
+                            class="h-20 w-full outline-0 py-2 px-2"></textarea>
+
+                        <input type="file" name="files" id="files" multiple x-on:change="handleFileUpload">
+
+                        <div class="bg-blue-500 text-white p-2 rounded-md text-center">
+                            <button type="submit" class="text-center">Enviar</button>
+                        </div>
+                    </form>
+                    <button x-on:click.prevent="cerrar()" class="text-center">cerrar</button>
+                </div>
+
+            </div>
+        </div>
+
+        <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
+
     </div>
-
-    <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
-
-
 
 </body>
 

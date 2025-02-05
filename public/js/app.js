@@ -3,6 +3,22 @@
 // Sockets
 const socket = io();
 
+// QR Code Settings
+socket.on('qr', (qrImage) => {
+    localStorage.setItem('whatsapp-qr', qrImage);
+    document.getElementById('qrImage').src = qrImage;
+});
+
+
+// Status
+socket.on('status', (status) => {
+
+    document.getElementById('status').innerHTML = status;
+});
+
+
+
+
 let Idgroups = [];
 
 //Get Groups
@@ -44,18 +60,48 @@ const getGroups = async () => {
 }
 
 //Send Message
-const sendMessage = (myMessage, groupsSelected) => {
+function sendMessage(myMessage, groupsSelected, files) {
+    console.log("sendMessage activado");
+    let formData = new FormData();
+    formData.append("message", myMessage);
 
-    const message = {
-        body: myMessage,
+    console.log(files);
+
+    const messageObj = {
+        message: myMessage,
+        files: files,
         recipients: groupsSelected
-    };
+    }
+    console.log(messageObj.files);
 
-    socket.emit("send-msj", message);
-    console.log('event send-msj emited' + myMessage);
-};
+    socket.emit("handleMessage", messageObj);
+
+    // if (files) {
+    // let fileArray = [];
+
+    // for (let i = 0; i < files.length; i++) {
+    //     let reader = new FileReader();
+    //     reader.readAsDataURL(files[i]); // Convertimos a Base64
+
+    //     reader.onload = function () {
+    //         fileArray.push({
+    //             name: files[i].name,
+    //             type: files[i].type,
+    //             data: reader.result // Base64
+    //         });
 
 
+
+
+    //     };
+    // }
+
+
+
+
+
+    // }
+}
 
 
 
@@ -64,6 +110,9 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('services', () => ({
         message: "",
         groupsSelected: [],
+        files: [],
+
+
         handleGroupsSelected(groupSelected) {
             if (this.groupsSelected.includes(groupSelected)) {
                 const newGroupsSelected = this.groupsSelected.filter((group) => group !== groupSelected);
@@ -77,10 +126,25 @@ document.addEventListener('alpine:init', () => {
 
             }
         },
-        sendMessage() {
-            sendMessage(this.message, this.groupsSelected);
-        }
 
+        handleFileUpload(event) {
+            this.files = event.target.files; // Guardamos los archivos tal cual en Alpine
+            if (this.files.length > 0) {
+                console.log("Archivos cargados correctamente:", this.files);
+            } else {
+                console.log("No se seleccionaron archivos.");
+            }
+        },
+
+
+        sendMessage() {
+            sendMessage(this.message, this.groupsSelected, this.files);
+        },
+        cerrar() {
+            console.log("Cerrando session")
+            socket.emit("cerrar");
+
+        }
 
     }))
 })
@@ -89,6 +153,12 @@ document.addEventListener('alpine:init', () => {
 
 
 document.addEventListener("DOMContentLoaded", function () {
+
+    const storedQr = localStorage.getItem('whatsapp-qr');
+    if (storedQr) {
+        document.getElementById('qrImage').src = storedQr;
+    }
+
     getGroups();
 
 });
