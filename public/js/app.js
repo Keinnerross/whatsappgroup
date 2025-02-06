@@ -12,7 +12,6 @@ socket.on('qr', (qrImage) => {
 
 // Status
 socket.on('status', (status) => {
-
     document.getElementById('status').innerHTML = status;
 });
 
@@ -23,17 +22,21 @@ let Idgroups = [];
 
 //Get Groups
 const getGroups = async () => {
+    let table;
 
-    const table = new DataTable("#groupTable", {
-        searching: true,  // Activa el buscador
-        paging: false,     // Activa la paginación
-        info: false,       // Muestra información sobre la cantidad de registros
-    });
+
+
 
     socket.on("groups-updated", (groups) => {
-        table.clear(); // Limpiar la tabla antes de actualizar
 
         if (groups.length > 0) {
+            
+            table = new DataTable("#groupTable", {
+                searching: true,  // Activa el buscador
+                paging: false,     // Activa la paginación
+                info: false,       // Muestra información sobre la cantidad de registros
+            });
+
             groups.forEach(group => {
                 Idgroups.push(group.id);
 
@@ -42,14 +45,14 @@ const getGroups = async () => {
                 const profilePicUrl = group.profilePicUrl ? group.profilePicUrl : "/assets/group-profile.png";
                 table.row.add([
                     `<div class="w-10 h-10 rounded-full overflow-hidden">
-                    <img src="${profilePicUrl}" alt="${group.name} class="object-cover" />
+                    <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""} class="object-cover" />
                 </div>`,
-                    group.name,
+                    group.name ? group.name : "Grupo sin Nombre",
                     `<input type="checkbox" x-on:change="handleGroupsSelected('${group.id}')"/>`
                 ]);
             });
         } else {
-            table.row.add(["Cargando grupos...", ""]);
+            table.row.add(["Cargando grupos...", "", ""]);
         }
 
         table.draw(); // Renderizar la tabla con los nuevos datos
@@ -76,34 +79,13 @@ function sendMessage(myMessage, groupsSelected, files) {
 
     socket.emit("handleMessage", messageObj);
 
-    // if (files) {
-    // let fileArray = [];
 
-    // for (let i = 0; i < files.length; i++) {
-    //     let reader = new FileReader();
-    //     reader.readAsDataURL(files[i]); // Convertimos a Base64
-
-    //     reader.onload = function () {
-    //         fileArray.push({
-    //             name: files[i].name,
-    //             type: files[i].type,
-    //             data: reader.result // Base64
-    //         });
-
-
-
-
-    //     };
-    // }
-
-
-
-
-
-    // }
 }
 
 
+
+
+let xShowTable = false
 
 
 document.addEventListener('alpine:init', () => {
@@ -111,43 +93,94 @@ document.addEventListener('alpine:init', () => {
         message: "",
         groupsSelected: [],
         files: [],
+        isPicker: false,
+        showTable: xShowTable,
 
-
+        // Maneja la selección de grupos
         handleGroupsSelected(groupSelected) {
             if (this.groupsSelected.includes(groupSelected)) {
-                const newGroupsSelected = this.groupsSelected.filter((group) => group !== groupSelected);
-                this.groupsSelected = newGroupsSelected;
+                this.groupsSelected = this.groupsSelected.filter((group) => group !== groupSelected);
                 console.log(this.groupsSelected);
             } else {
-                console.log('No existe y lo agrego');
                 this.groupsSelected.push(groupSelected);
                 console.log(this.groupsSelected);
-
-
             }
         },
 
+        // Maneja la carga de archivos
         handleFileUpload(event) {
-            this.files = event.target.files; // Guardamos los archivos tal cual en Alpine
+            const selectedFiles = Array.from(event.target.files);
+            const totalSize = selectedFiles.reduce((total, file) => total + file.size, 0);
+
+            // Validaciones
+            if (selectedFiles.length > 5) {
+                alert("Solo puedes seleccionar un máximo de 5 imágenes.");
+                return;
+            }
+            if (totalSize > 20 * 1024 * 1024) { // 20MB
+                alert("El tamaño total de las imágenes no puede exceder los 20 MB.");
+                return;
+            }
+
+            // Filtrar archivos válidos (solo .jpg y .png)
+            const validFiles = selectedFiles.filter(file => {
+                const fileType = file.type;
+                return fileType === "image/jpeg" || fileType === "image/png";
+            });
+
+            // Actualizar la lista de archivos seleccionados
+            this.files = validFiles;
+
             if (this.files.length > 0) {
                 console.log("Archivos cargados correctamente:", this.files);
             } else {
-                console.log("No se seleccionaron archivos.");
+                console.log("No se seleccionaron archivos válidos.");
             }
         },
 
+        // Eliminar archivo de la lista
+        removeFile(index) {
+            this.files.splice(index, 1);
+        },
 
+
+        // Enviar el mensaje
         sendMessage() {
             sendMessage(this.message, this.groupsSelected, this.files);
         },
+
+        // Cerrar sesión
         cerrar() {
-            console.log("Cerrando session")
+            console.log("Cerrando sesión");
             socket.emit("cerrar");
-
         }
+    }));
+});
 
-    }))
-})
+
+
+
+//isLoading
+
+socket.on('isLoadingGroups', (isLoadingGroups) => {
+    const loadingElement = document.getElementById('isLoadingGroups');
+
+    if (isLoadingGroups === 'Desconectado') {
+        loadingElement.innerHTML = 'Esperando conexión...';
+    } else if (isLoadingGroups === 'Cargando') {
+        // Caso Cargando
+        loadingElement.innerHTML = 'Cargando grupos...';
+    } else if (isLoadingGroups === 'Finalizado') {
+        // Caso Finalizado
+        loadingElement.innerHTML = '';
+        xShowTable = true;
+    } else {
+        // Caso por defecto
+        loadingElement.innerHTML = 'Error al cargar grupos';
+    }
+});
+
+
 
 
 
@@ -160,5 +193,26 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     getGroups();
+
+    //Emoji Picker
+    const pickerOptions = {
+        onEmojiSelect: emoji => {
+            const inputMessage = document.getElementById('input-message');
+            inputMessage.value += emoji.native;
+        }
+    };
+
+    const picker = new EmojiMart.Picker(pickerOptions);
+
+
+
+    document.getElementById('emoji-picker').appendChild(picker);
+    // Añadir el picker al cuerpo de la página
+
+    // Obtener la posición del botón
+
+    // Posicionar el picker cerca del botón
+    picker.style.position = 'relative';
+
 
 });

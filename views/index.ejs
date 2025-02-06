@@ -15,7 +15,9 @@
     <!-- Jquery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/js/app.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- //emojis -->
+    <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 
 
 
@@ -24,18 +26,21 @@
 <body x-data="services">
     <div id="ui-controllers" x-data="{ isQrOpen : false }">
 
-        <header class="w-full bg-black text-white p-4 flex  flex-col justify-between items-center">
-            <nav>
-                <ul class="flex gap-4">
-                    <li><a href="/">Inicio</a></li>
-                    <li x-on:click="isQrOpen = true" class="cursor-pointer">Escanear QR</li>
-                    <li><a href="/groups">Enviados</a></li>
-                    <li><a href="/groups">Cerrar Sesión</a></li>
-                    <h2 id="status"></h2>
-                </ul>
-            </nav>
-            <div class="h-20 text-3xl font-bold flex items-center">
-                <h2>WhatsAppGroups</h2>
+        <header class="w-full py-1 bg-black text-white flex flex-col justify-center items-center  ">
+            <div class="w-[90vw]  px-4 bg-black rounded-2xl flex justify-between items-center">
+                <div class="flex flex-col ">
+                    <h2 class="text-2xl font-semibold ">WhatsAppGroups</h2>
+                </div>
+                <nav>
+                    <ul class="flex gap-4">
+                        <li><a href="/">Inicio</a></li>
+                        <li x-on:click="isQrOpen = true" class="cursor-pointer"><i class="fa fa-qrcode"
+                                aria-hidden="true"></i></li>
+                        <li><a href="/groups">Enviados</a></li>
+                        <li><a href="/groups">Cerrar Sesión</a></li>
+                        <h2 id="status"></h2>
+                    </ul>
+                </nav>
             </div>
         </header>
 
@@ -57,43 +62,133 @@
 
 
         <!-- Content -->
-        <div class="flex flex-col items-center">
-            <div class="w-[400px] p-4 rounded-lg">
-                <div id="" class="">
-                    <div class="h-[400px] overflow-y-scroll">
+        <div class="w-full flex items-center flex-col bg-slate-100 h-screen">
 
-                        <table id="groupTable" class="display ">
-                            <thead>
-                                <tr>
-                                    <th class="hidden">Imagen del Grupo</th>
-                                    <th class="hidden">Nombre del Grupo</th>
-                                    <th class="hidden">Opciones</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody> <!-- Aquí se insertarán las filas dinámicamente -->
-                        </table>
+            <div class="bg-white rounded-lg px-8 py-8 w-[90vw] my-5 flex justify-between">
+                <h2 class="text-2xl font-bold">¡Bienvenido!</h2>
+                <div>
+                    <div class="flex gap-4 items-center">
+                        <div
+                            class="px-4 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-lg flex items-center justify-center">
+                            <span>Scanear QR</span>
+                        </div>
+                        <div
+                            class="overflow-hidden rounded-full w-10 h-10 bg-white flex justify-center items-center text-center">
+                            <svg stroke="black" fill="black" stroke-width="0" viewBox="0 0 512 512" height="35"
+                                width="35" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M399 384.2C376.9 345.8 335.4 320 288 320l-64 0c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 16a72 72 0 1 0 0-144 72 72 0 1 0 0 144z">
+                                </path>
+                            </svg>
+
+                        </div>
+
+
+
+                        <div class="leading-0">
+                            <p class="font-bold text-lg">Administrador</p>
+                            <span class="text-gray-500 text-sm">cuenta y ajustes</span>
+                        </div>
+
                     </div>
 
-
-
-                    <form x-data="{ message: '', files: null }" x-on:submit.prevent="sendMessage">
-                        <textarea x-model="message" placeholder="Escribe un Mensaje"
-                            class="h-20 w-full outline-0 py-2 px-2"></textarea>
-
-                        <input type="file" name="files" id="files" multiple x-on:change="handleFileUpload">
-
-                        <div class="bg-blue-500 text-white p-2 rounded-md text-center">
-                            <button type="submit" class="text-center">Enviar</button>
-                        </div>
-                    </form>
-                    <button x-on:click.prevent="cerrar()" class="text-center">cerrar</button>
                 </div>
+            </div>
 
+            <div class="flex justify-between items-center w-[90vw] gap-6">
+
+
+                <div class="rounded-2xl w-[45%] bg-white h-full">
+                    <ul>
+                        <li>Local</li>
+                        <li>Local</li>
+                        <li>Local</li>
+                    </ul>
+                </div>
+                <div class="w-[55%]  rounded-2xl bg-white p-4">
+                    <div id="" class="">
+                        <div class="h-[300px] overflow-y-scroll">
+                            <p id="isLoadingGroups"></p>
+                            <table id="groupTable">
+                                <thead>
+                                    <tr>
+                                        <th class="hidden">Imagen del Grupo</th>
+                                        <th class="hidden">Nombre del Grupo</th>
+                                        <th class="hidden">Opciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody> <!-- Aquí se insertarán las filas dinámicamente -->
+                            </table>
+                        </div>
+
+                        <form x-on:submit.prevent="sendMessage" class="relative">
+
+                            <div x-show="isPicker" id="emoji-picker" class="absolute top-[-330%]"></div>
+
+                            <div>
+                                <!-- Textarea for message -->
+                                <textarea id="input-message" x-model="message" placeholder="Escribe un Mensaje"
+                                    class="h-20 w-full outline-0 py-2 px-2 resize-none"></textarea>
+                                <div class="flex justify-between">
+
+                                    <div id="controllers-action" class="flex gap-2 pb-2 ">
+                                        <label for="files"
+                                            class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
+                                            <i class="fa fa-picture-o text-gray-600" aria-hidden="true"></i>
+                                        </label>
+                                        <p x-on:click="isPicker = !isPicker"
+                                            class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
+                                            <i class="fa fa-smile-o" aria-hidden="true"></i>
+                                        </p>
+                                        <input type="file" name="files" id="files" multiple accept=".jpg,.png"
+                                            x-on:change="handleFileUpload" class="hidden">
+
+                                    </div>
+                                    <div id="button-send-programing"
+                                        class="h-10 w-[140px] bg-slate-100 flex overflow-hidden rounded-full text-white text-sm">
+                                        <button type="submit"
+                                            class="h-full w-[60%] bg-slate-700 hover:bg-slate-800 cursor-pointer font-semibold">Enviar</button>
+                                        <div
+                                            class="h-full w-[40%] bg-slate-400 flex justify-center items-center hover:bg-slate-800 cursor-pointer">
+
+                                            <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- <span class="block mt-2 text-gray-500"
+                                    x-text="files.length > 0 ? `${files.length} archivo(s) seleccionados` : ''"></span> -->
+
+                                <!-- Miniatures Preview -->
+                                <div class="mt-2 grid grid-cols-5 gap-2" x-show="files.length > 0">
+                                    <template x-for="(file, index) in files" :key="index">
+                                        <div class="relative">
+                                            <img :src="URL.createObjectURL(file)" alt=""
+                                                class="w-16 h-16 object-cover rounded-md">
+                                            <button type="button" x-on:click="removeFile(index)"
+                                                class="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs">X</button>
+                                        </div>
+                                    </template>
+                                </div>
+
+                            </div>
+
+
+
+                        </form>
+                        <!-- <button x-on:click.prevent="cerrar()" class="text-center">cerrar</button> -->
+                    </div>
+
+                </div>
             </div>
         </div>
+        <footer class="bg-slate-200 text-center">
+            <h3>rossdev</h3>
+        </footer>
 
         <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
-
     </div>
 
 </body>

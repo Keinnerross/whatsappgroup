@@ -26,7 +26,7 @@ app.set('view engine', 'ejs');
 // Socket.io
 const io = socketIo(server, {
     maxHttpBufferSize: 30 * 1024 * 1024 // 30 MB, ajusta según necesites
-  });
+});
 
 
 // Rutas
@@ -47,13 +47,12 @@ const client = new Client({
 //Funciones (Controllers)
 
 let status = "Desconectado";
+let isLoadingGroups = "Desconectado";
 
 
 //get
 let groups = [];
 const getGroups = async () => {
-
-
     console.log("GetGroups En proceso.")
     console.time('Tiempo de ejecución getGroups'); // Inicia la medición de tiempo
 
@@ -86,6 +85,11 @@ const getGroups = async () => {
         const filteredGroups = formatedGroups
             .filter(result => result.status === 'fulfilled' && result.value !== null)
             .map(result => result.value);
+
+        isLoadingGroups = "Finalizado";
+        io.emit('isLoadingGroups', isLoadingGroups);
+
+
 
         console.timeEnd('Tiempo de ejecución getGroups'); // Finaliza la medición de tiempo
         return filteredGroups;
@@ -235,6 +239,9 @@ client.on('ready', async () => {
     console.log('Cliente WhatsApp Conectado');
     status = "Conectado";
     io.emit('status', status);
+    isLoadingGroups = "Cargando";
+    io.emit('isLoadingGroups', isLoadingGroups);
+
 
 
     groups = await getGroups();
@@ -251,6 +258,7 @@ io.on('connection', (socket) => {
 
     io.emit('groups-updated', groups);
     io.emit('status', status);
+    io.emit('isLoadingGroups', isLoadingGroups);
 
 
 
