@@ -3,7 +3,7 @@
 // Sockets
 const socket = io();
 
-
+const delayLoading = 5000
 
 
 
@@ -21,6 +21,32 @@ socket.on('qr', (qrImage) => {
 socket.on('status', (status) => {
     document.getElementById('status').innerHTML = status;
 });
+
+
+
+
+socket.on('messageProgramatedState', (state) => {
+    if (state == "Programado") {
+        Alpine.store("services").isSendProgramated = false;
+        Alpine.store('services').modalSucesfulMsjProgramated = true;
+
+        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            checkbox.checked = false; 
+        });
+
+        Alpine.store("services").message = ""
+        Alpine.store("services").files = []
+        Alpine.store("services").groupsSelected = []
+
+    } else if (state == "FechaPasada") {
+        alert("⚠️ La hora ya pasó, no se puede programar el mensaje.")
+    } else {
+        alert("⚠️Ocurrio un error a programar mensaje")
+    }
+
+});
+
+
 
 
 let msjResponse;
@@ -56,42 +82,51 @@ const getGroups = async () => {
 
 
     socket.on("groups-updated", (groups) => {
-        if (groups.length > 0) {
 
-            table = new DataTable("#groupTable", {
-                searching: true,  // Activa el buscador
-                paging: false,     // Activa la paginación
-                info: false,  // Muestra información sobre la cantidad de registros
-                language: {
-                    searchPlaceholder: 'Busca tus grupos'
-                }
+        setTimeout(() => {
+            if (groups.length > 0) {
 
-            });
 
-            groups.forEach(group => {
-                Idgroups.push(group.id);
+                table = new DataTable("#groupTable", {
+                    searching: true,  // Activa el buscador
+                    paging: false,     // Activa la paginación
+                    info: false,  // Muestra información sobre la cantidad de registros
+                    language: {
+                        searchPlaceholder: 'Busca tus grupos',
+                        emptyTable: "Aun no hay grupos disponibles 😖",
+                        infoEmpty: "No hay registros 🔍",
+                        zeroRecords: "No se encontraron resultados 🔍"
+                    }
 
-                const profilePicUrl = group.profilePicUrl ? group.profilePicUrl : "/assets/group-profile.png";
-                table.row.add([
-                    `
-                    <label class="flex h-12 gap-2 w-full h-full cursor-pointer" for="group-${group.id}">
-                        <div class="w-12 rounded-full overflow-hidden">
-                            <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""} class="object-cover" />
-                        </div>
+                });
 
-                        <div class="pt-2">
-                            <span class="text-lg text-gray-700">${group.name ? group.name : "Grupo sin Nombre"}</span>
-                        </div>
-                    </label>               
-                `,
-                    `<input  id="group-${group.id}" type="checkbox" x-on:change="$store.services.handleGroupsSelected('${group.id}')"/>`
-                ]);
-            });
-        } else {
-            table.row.add(["Cargando grupos...", "", ""]);
-        }
 
-        table.draw(); // Renderizar la tabla con los nuevos datos
+                groups.forEach(group => {
+                    Idgroups.push(group.id);
+
+                    const profilePicUrl = group.profilePicUrl ? group.profilePicUrl : "/assets/group-profile.png";
+                    table.row.add([
+                        `
+                <label class="flex h-12 gap-2 w-full h-full cursor-pointer" for="group-${group.id}">
+                    <div class="w-12 rounded-full overflow-hidden">
+                        <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""} class="object-cover" />
+                    </div>
+
+                    <div class="pt-2">
+                        <span class="text-lg text-gray-700">${group.name ? group.name : "Grupo sin Nombre"}</span>
+                    </div>
+                </label>               
+            `,
+                        `<input  id="group-${group.id}" type="checkbox" x-on:change="$store.services.handleGroupsSelected('${group.id}')"/>`
+                    ]);
+                });
+            } else {
+                table.row.add(["Cargando grupos...", "", ""]);
+            }
+            table.draw(); // Renderizar la tabla con los nuevos datos
+        }, delayLoading)
+
+
 
     });
 
@@ -135,28 +170,7 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
             <div class="flex flex-col items-center">
                 <span class="loader"></span>
                 <div class="w-[300px] pt-8 text-center text-gray-700">
-                    <swiper-container autoplay="true" loop="true">
-                        <swiper-slide>🕵️‍♂️ Buscando grupos secretos... ¡Shhh!</swiper-slide>
-                        <swiper-slide>📱 Revisando grupos archivados...</swiper-slide>
-                        <swiper-slide>🐱 Reuniendo stickers de gatitos... ¡Miau!</swiper-slide>
-                        <swiper-slide>🤔 Descifrando mensajes borrados...</swiper-slide>
-                        <swiper-slide>👀 Espiando los grupos de la familia... ¡Cuidado con los tíos!</swiper-slide>
-                        <swiper-slide>📅 Organizando grupo de eventos ...</swiper-slide>
-                        <swiper-slide>🍿 Buscando los mejores memes...</swiper-slide>
-                        <swiper-slide>🔍 Encontrando al admin fantasma...</swiper-slide>
-                        <swiper-slide>🐶 Organizando stickers de perritos...!</swiper-slide>
-                        <swiper-slide>📲 Sincronizando mensajes...</swiper-slide>
-                        <swiper-slide>🎤 Preparando audios de karaoke... </swiper-slide>
-                        <swiper-slide>🕶️ Revisando grupos de trabajo... ¡Modo serio activado!</swiper-slide>
-                        <swiper-slide>📚 Organizando grupos de estudio...</swiper-slide>
-                        <swiper-slide>🍕 Planificando la próxima reunión...</swiper-slide>
-                        <swiper-slide>📸 Revisando fotos grupales...</swiper-slide>
-                        <swiper-slide>🪙 Buscando grupos de ventas...</swiper-slide>
-                        <swiper-slide>💬 Recopilando los mejores chismes... ¡Shhh, secreto!</swiper-slide>
-                        <swiper-slide>📦 Desempolvando grupos olvidados...</swiper-slide>
-                        <swiper-slide>🌍 Conectando con grupos internacionales...</swiper-slide>
-                        <swiper-slide>🚀 Preparando el despegue de los gurpos...</swiper-slide>
-                    </swiper-container>
+                        <p>🚀 Preparando el despegue de los gurpos...</p>
                 </div>
             </div>
         </div>
@@ -178,9 +192,34 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
              <h3 class="w-[80%] text-center text-sm font-medium">Escanee el Código QR para Comenzar</h3>
         </div>
     </div>`;
+
+        table.destroy(); // Destruye la instancia de DataTable
+        table = null;
     } else if (isLoadingGroups === 'Finalizado') {
-        loadingElement.classList.add('hidden');
-        groupTable.classList.remove('hidden');
+        loadingElement.classList.remove('hidden');
+        groupTable.classList.add('hidden');
+
+        loadingElement.innerHTML = `
+        <div class="w-full h-full flex justify-center items-center pt-10">
+            <div class="flex flex-col items-center">
+                <span class="loader"></span>
+                <div class="w-[300px] pt-8 text-center text-gray-700">
+                         <swiper-container autoplay="true" loop="true">
+                        <swiper-slide>🐱 Reuniendo stickers de gatitos... ¡Miau!</swiper-slide>
+                        <swiper-slide>👀 Espiando los grupos de la familia... ¡Cuidado con los tíos!</swiper-slide>
+                        <swiper-slide>🚀 Preparando el despegue de los gurpos...</swiper-slide>
+                    </swiper-container>
+                </div>
+            </div>
+        </div>
+        `;
+
+        setTimeout(() => {
+            loadingElement.classList.add('hidden');
+            groupTable.classList.remove('hidden');
+
+        }, delayLoading)
+
 
     } else {
         // Caso por defecto
@@ -205,6 +244,27 @@ document.addEventListener('alpine:init', () => {
         isPicker: false,
         modalSendMsj: false,
         modalSucesfulMsj: false,
+        isMessageProgramated: false,
+        modalSucesfulMsjProgramated: false,
+        isSendProgramated: false,
+        time: "",
+        date: "",
+
+        handleMessageProgramated() {
+
+            const messageObj = {
+                message: Alpine.store("services").message,
+                files: Alpine.store("services").files,
+                recipients: Alpine.store("services").groupsSelected,
+                hora: Alpine.store("services").time,
+                fecha: Alpine.store("services").date,
+            }
+            console.log('handleMessageProgramated: ', messageObj)
+
+
+            socket.emit('handleMessageProgramated', messageObj);
+
+        },
 
         // Maneja la selección de grupos
         handleGroupsSelected(groupSelected) {
@@ -305,7 +365,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (swiperContainer) {
         Object.assign(swiperContainer, {
             autoplay: {
-                delay: 1500,
+                delay: 0,
                 disableOnInteraction: false, // No se detiene al interactuar
             },
             loop: true,

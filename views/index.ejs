@@ -28,7 +28,7 @@
 </head>
 
 <body x-data>
-    <div id="ui-controllers" x-data="{ isQrOpen : false }">
+    <div id="ui-controllers" x-data="{ isQrOpen : false, }">
 
         <header class="w-full py-1 bg-black text-white flex flex-col justify-center items-center  ">
             <div class="w-[90vw]  px-4 bg-black rounded-2xl flex justify-between items-center">
@@ -52,36 +52,90 @@
             </div>
         </header>
 
+
+
+
+        <!--Modal Programar Whatsapps-->
+        <div x-show="$store.services.isSendProgramated" id="send-programated"
+            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30 relative z-50">
+            <div class="w-[500px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
+                <h2 class="text-xl font-semibold text-center mb-4">Programar Publicación</h2>
+                <form x-on:submit.prevent="$store.services.handleMessageProgramated">
+                    <label class="block text-sm font-medium text-gray-700">Fecha</label>
+                    <input x-model="$store.services.date" type="date"
+                        class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required>
+
+                    <label class="block text-sm font-medium text-gray-700 mt-4">Hora</label>
+                    <input x-model="$store.services.time" type="time"
+                        class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required>
+                    <div class="flex gap-2">
+                        <p x-on:click="$store.services.isSendProgramated = false"
+                            class="w-full cursor-pointer mt-6 bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                            Cancelar
+                        </p>
+                        <button type="submit"
+                            class="w-full cursor-pointer mt-6 bg-gray-400  text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                            Programar
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!--Modal QR-->
         <div x-show="isQrOpen" id="qr-container"
-            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
-
-
-            <div class="w-[400px] h-[400px] bg-white rounded-lg p-4 flex justify-center items-center flex-col gap-4">
+            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            <div class="w-[400px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
                 <div class="w-[250px] h-[250px] rounded-lg overflow-hidden">
                     <img id="qrImage" src="" alt="qr" class="w-full h-full object-contain">
                 </div>
                 <span x-on:click="isQrOpen = false"
-                    class="px-2 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-md text-center">Entendido</span>
+                    class="px-6 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
+                </span>
             </div>
-
         </div>
 
+        <!--Modal Send MSJ-->
         <div x-show="$store.services.modalSendMsj"
-            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
 
 
-            <div class="w-[550px] h-[400px] bg-white rounded-lg p-4 flex justify-center items-center flex-col gap-4">
-                <div class="">
-                    <h2>¿Estas Seguro de Enviar este mensaje?</h2>
+            <div class="w-[550px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
+                <div class="flex flex-col items-center">
+                    <svg class="pb-2" stroke="gray" fill="none" stroke-width="0" viewBox="0 0 24 24" height="180px"
+                        width="180px" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M12 6C12.5523 6 13 6.44772 13 7V13C13 13.5523 12.5523 14 12 14C11.4477 14 11 13.5523 11 13V7C11 6.44772 11.4477 6 12 6Z"
+                            fill="#99a1af"></path>
+                        <path
+                            d="M12 16C11.4477 16 11 16.4477 11 17C11 17.5523 11.4477 18 12 18C12.5523 18 13 17.5523 13 17C13 16.4477 12.5523 16 12 16Z"
+                            fill="#99a1af"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12Z"
+                            fill="#99a1af"></path>
+                    </svg>
+                    <h2 class="text-gray-700 text-lg pb-2">¿Estas Seguro de Enviar este mensaje?</h2>
                 </div>
                 <div class="flex gap-4">
-                    <span x-on:click="$store.services.sendMessage"
-                        class="px-2 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-md text-center">Enviar
-                    </span>
-                    <span x-on:click="$store.services.modalSendMsj = false"
-                        class="px-2 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-md text-center">Cancelar
-                    </span>
 
+                    <span x-on:click="$store.services.modalSendMsj = false"
+                        class="px-4 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-full text-center">Cancelar
+                    </span>
+                    <p x-on:click="$store.services.sendMessage"
+                        class="px-4 py-2 bg-gray-400 text-white font-semibold cursor-pointer rounded-full flex">
+                        <span class="flex gap-2 items-center"><svg stroke="currentColor" fill="currentColor"
+                                stroke-width="0" viewBox="0 0 16 16" height="15px" width="15px"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471z">
+                                </path>
+                            </svg>
+                            Enviar</span>
+
+                    </p>
 
                 </div>
 
@@ -89,18 +143,48 @@
 
         </div>
 
+        <!--Modal SUCESSFUL MSJ-->
         <div x-show="$store.services.modalSucesfulMsj" id="modalStatusMessage"
-            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
 
-
-            <div class="w-[550px] h-[400px] bg-white rounded-lg p-4 flex justify-center items-center flex-col gap-4">
-                <div class="">
-                    <h2>mensaje Enviado con éxito</h2>
+            <div class="w-[550px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
+                <div class="flex flex-col gap-6 items-center">
+                    <svg stroke="#99a1af" fill="#99a1af" stroke-width="0" viewBox="0 0 512 512" height="170px"
+                        width="170px" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M498.1 5.6c10.1 7 15.4 19.1 13.5 31.2l-64 416c-1.5 9.7-7.4 18.2-16 23s-18.9 5.4-28 1.6L284 427.7l-68.5 74.1c-8.9 9.7-22.9 12.9-35.2 8.1S160 493.2 160 480l0-83.6c0-4 1.5-7.8 4.2-10.8L331.8 202.8c5.8-6.3 5.6-16-.4-22s-15.7-6.4-22-.7L106 360.8 17.7 316.6C7.1 311.3 .3 300.7 0 288.9s5.9-22.8 16.1-28.7l448-256c10.7-6.1 23.9-5.5 34 1.4z">
+                        </path>
+                    </svg>
+                    <h2 class="text-gray-700 text-lg">¡Mensaje Enviado con éxito!<span class="text-2xl">📨</span> </h2>
                 </div>
                 <div class="flex gap-4">
 
                     <span x-on:click="$store.services.modalSucesfulMsj = false"
-                        class="px-2 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-md text-center">Cerrar
+                        class="px-6 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
+                    </span>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!--Modal SUCESSFUL MSJ PROGRAMATED-->
+        <div x-show="$store.services.modalSucesfulMsjProgramated" id="modalStatusMessage"
+            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+
+            <div class="w-[550px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
+                <div class="flex flex-col gap-6 items-center">
+
+                    <h2 class="text-gray-700 text-lg">¡Mensaje Programado con éxito!<span class="text-2xl">📨</span>
+                    </h2>
+                </div>
+                <div class="flex gap-4">
+
+                    <span x-on:click="$store.services.modalSucesfulMsjProgramated = false"
+                        class="px-6 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
                     </span>
 
 
@@ -114,7 +198,7 @@
 
         <!-- Content -->
         <div class="w-full flex items-center flex-col bg-slate-100 pb-8 ">
-
+            <!-- Header Content -->
             <div class="bg-white rounded-lg px-8 py-8 w-[90vw] my-5 flex justify-between">
                 <h2 class="text-2xl font-bold">¡Bienvenido!</h2>
                 <div>
@@ -145,75 +229,50 @@
 
                 </div>
             </div>
+            <!-- Content Content -->
+            <div class="flex justify-between  w-[90vw] gap-6 min-h-[500px]">
 
-            <div class="flex justify-between items-center w-[90vw] gap-6">
-
-
-                <div class="rounded-2xl w-[45%] bg-white h-full">
-                    <ul>
-
-                        <li>Local</li>
-                        <li>Local</li>
-                        <li>Local</li>
-                    </ul>
+                <div class="rounded-2xl w-[45%] bg-white flex justify-center min-h-[500px] p-6">
+                    <div class="w-full  h-[500px] overflow-y-scroll pr-4">
+                        <p id="isLoadingGroups" class="h-full"></p>
+                        <table id="groupTable">
+                            <thead>
+                                <tr>
+                                    <th class="hidden">Info Group</th>
+                                    <th class="hidden">Opciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="min-w-[50%] text-center"></tbody>
+                            <!-- Aquí se insertarán las filas dinámicamente -->
+                        </table>
+                    </div>
                 </div>
-                <div class="w-[55%]  min-h-[300px] rounded-2xl bg-white p-4">
-                    <div id="" class="w-[98%] ">
-                        <div class="w-full  h-[300px] overflow-y-scroll pr-4">
-                            <p id="isLoadingGroups" class="h-full"></p>
-                            <table id="groupTable">
-                                <thead>
-                                    <tr>
-                                        <th class="hidden">Info Group</th>
-                                        <th class="hidden">Opciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="min-w-[50%] text-center"></tbody>
-                                <!-- Aquí se insertarán las filas dinámicamente -->
-                            </table>
-                        </div>
+                <div class="w-[55%]  rounded-2xl bg-white p-6 min-h-[500px]">
 
-                        <form x-on:submit.prevent="$store.services.modalSendMsj = true" class="relative">
 
-                            <div x-show="$store.services.isPicker" id="emoji-picker" class="absolute top-[-330%]"></div>
+                    <form x-on:submit.prevent="$store.services.modalSendMsj = true" class="relative h-full">
 
-                            <div>
-                                <!-- Textarea for message -->
-                                <textarea id="input-message" x-model="$store.services.message"
-                                    placeholder="Escribe un Mensaje"
-                                    class="h-20 w-full outline-0 py-2 px-2 resize-none"></textarea>
-                                <div class="flex justify-between">
+                        <div x-show="$store.services.isPicker" id="emoji-picker" class="absolute z-10 top-[5%] right-[110%]"></div>
+                        <div class="h-full">
+                            <!-- Textarea for message -->
+                            <textarea id="input-message" x-model="$store.services.message"
+                                placeholder="Escribe un Mensaje"
+                                class="w-full outline-0 p-4 resize-none bg-slate-100 rounded-2xl" x-bind:class="{ 
+                                    'h-[72%]': $store.services.files.length > 0,
+                                    'mb-2': $store.services.files.length > 0,
+                                    'h-[89%]': $store.services.files.length === 0,
+                                    'mb-4': $store.services.files.length === 0,
+                                }"></textarea>
 
-                                    <div id="controllers-action" class="flex gap-2 pb-2 ">
-                                        <label for="files"
-                                            class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
-                                            <i class="fa fa-picture-o text-gray-600" aria-hidden="true"></i>
-                                        </label>
-                                        <p x-on:click="$store.services.isPicker = !$store.services.isPicker"
-                                            class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
-                                            <i class="fa fa-smile-o" aria-hidden="true"></i>
-                                        </p>
-                                        <input type="file" name="files" id="files" multiple accept=".jpg,.png"
-                                            x-on:change="$store.services.handleFileUpload" class="hidden">
 
-                                    </div>
-                                    <div id="button-send-programing"
-                                        class="h-10 w-[140px] bg-slate-100 flex overflow-hidden rounded-full text-white text-sm">
-                                        <button type="submit"
-                                            class="h-full w-[60%] bg-slate-700 hover:bg-slate-800 cursor-pointer font-semibold">Enviar</button>
-                                        <div
-                                            class="h-full w-[40%] bg-slate-400 flex justify-center items-center hover:bg-slate-800 cursor-pointer">
+                            <!-- Miniatures Preview -->
+                            <div x-bind:class="{ 
+                                'h-[17%]': $store.services.files.length > 0,
+                                'h-0': $store.services.files.length === 0,
 
-                                            <i class="fa fa-clock-o" aria-hidden="true"></i>
-                                        </div>
+                            }">
 
-                                    </div>
-
-                                </div>
-
-                                <p x-data x-show="$store.services.ifShowImages">xdddd</p>
-                                <!-- Miniatures Preview -->
-                                <div class="mt-2 flex gap-4" x-show="$store.services.files.length > 0">
+                                <div class="mt-2 flex gap-4 h-[100px]" x-show="$store.services.files.length > 0">
                                     <template x-for="(file, index) in $store.services.files" :key="index">
                                         <div class="w-16 relative group cursor-pointer">
                                             <img :src="URL.createObjectURL(file)" alt=""
@@ -227,16 +286,53 @@
 
 
 
-                        </form>
-                    </div>
+
+                            <div class="flex justify-between">
+
+                                <div id="controllers-action" class="flex gap-2 pb-2 ">
+                                    <label for="files"
+                                        class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
+                                        <i class="fa fa-picture-o text-gray-600" aria-hidden="true"></i>
+                                    </label>
+                                    <p x-on:click="$store.services.isPicker = !$store.services.isPicker"
+                                        class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
+                                        <i class="fa fa-smile-o" aria-hidden="true"></i>
+                                    </p>
+                                    <input type="file" name="files" id="files" multiple accept=".jpg,.png"
+                                        x-on:change="$store.services.handleFileUpload" class="hidden">
+
+                                </div>
+                                <div id="button-send-programing"
+                                    class="h-10 w-[140px] bg-slate-100 flex overflow-hidden rounded-full text-white text-sm">
+                                    <button type="submit"
+                                        class="h-full w-[60%] bg-slate-700 hover:bg-slate-800 cursor-pointer font-semibold">Enviar</button>
+                                    <div x-on:click="$store.services.isSendProgramated  = true"
+                                        class="h-full w-[40%] bg-slate-400 flex justify-center items-center hover:bg-slate-800 cursor-pointer">
+
+                                        <i class="fa fa-clock-o" aria-hidden="true"></i>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                        </div>
+
+
+
+                    </form>
 
                 </div>
             </div>
         </div>
+
+
+        <!-- Footer -->
         <footer class="bg-slate-200 text-center">
             <h3>rossdev</h3>
         </footer>
-
         <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
     </div>
 

@@ -1,10 +1,9 @@
-const { Client, LocalAuth, NoAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, ClientInfo, LocalAuth, NoAuth, MessageMedia } = require('whatsapp-web.js');
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const QRCode = require('qrcode');
 const cors = require('cors');
-
 
 //Server
 const app = express();
@@ -42,6 +41,7 @@ const client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }
 });
+
 
 
 //Funciones (Controllers)
@@ -143,24 +143,51 @@ const handleMessage = (messageObj) => {
 
 }
 
+const handleMessageProgramated = (messageObj) => {
+    try {
+        const { hora, fecha } = messageObj;
+
+        const [year, month, day,] = fecha.split('-').map(Number);
+        const [hours, minutes] = hora.split(':').map(Number);
+
+
+        const targetDate = new Date(year, month - 1, day, hours, minutes, 0); // Crear fecha objetivo
+        const now = new Date();
+        const delay = targetDate.getTime() - now.getTime();
+
+        if (delay <= 0) {
+            console.log("⚠️ La hora ya pasó, no se puede programar el mensaje.");
+            console.log(`⚠️ X programado : ${targetDate}`);
+        io.emit('messageProgramatedState', "FechaPasada");
+
+            return;
+        }
+
+        const myID = client.info.wid._serialized;
+        const { message, recipients, files } = messageObj;
+        const dateFormated = `*${day}-${month}-${year}* a las *${hours}:${minutes}Hrs*`
 
 
 
-//Post
+        const notiTemplate = `🕐¡Mensaje programado para el día: ${dateFormated} *Cuerpo del mensaje:* "${message}", *Imagenes Enviadas:* ${files.length}, *Cantidad de Grupos:* ${recipients.length} grupos. `
+
+        client.sendMessage(myID, notiTemplate);
+
+        io.emit('messageProgramatedState', "Programado");
 
 
+        setTimeout(() => {
+            handleMessage(messageObj);
+        }, delay);
+
+    } catch (e) {
+        console.log("Ocurrio un error en programar mensaje")
+        io.emit('messageProgramatedState', "Error");
+
+    }
 
 
-
-
-//programing
-
-//delete
-
-
-
-
-
+}
 
 
 
@@ -208,7 +235,9 @@ client.on('ready', async () => {
     isLoadingGroups = "Cargando";
     io.emit('isLoadingGroups', isLoadingGroups);
 
+
     groups = await getGroups();
+
     // console.log('Grupos obtenidos:', groups);
     io.emit('groups-updated', groups);
 });
@@ -227,9 +256,13 @@ client.on('disconnected', () => {
 io.on('connection', async (socket) => {
     console.log('Cliente conectado a WebSocket');
 
-    io.emit('groups-updated', groups);
     io.emit('status', status);
-    io.emit('isLoadingGroups', isLoadingGroups);
+    setTimeout(() => {
+        io.emit('groups-updated', groups);
+        io.emit('isLoadingGroups', isLoadingGroups);
+
+    }, 1000)
+
 
 
 
@@ -238,6 +271,10 @@ io.on('connection', async (socket) => {
         handleMessage(messageObj);
     })
 
+    socket.on("handleMessageProgramated", (messageObj) => {
+        console.log("handleMessageProgramated activado");
+        handleMessageProgramated(messageObj);
+    })
 
 
 
@@ -257,8 +294,16 @@ io.on('connection', async (socket) => {
         console.log("Cliente cerrado, reiniciando...");
         status = "Desconectado";
 
+
         io.emit('status', status);
         groups = [];
+        isLoadingGroups = "Desconectado"
+        io.emit('groups-updated', groups);
+        io.emit('isLoadingGroups', isLoadingGroups);
+
+
+
+
         // Inicializar nuevamente el cliente
 
         client.initialize();
