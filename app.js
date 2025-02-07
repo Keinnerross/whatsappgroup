@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new NoAuth(),
+    authStrategy: new LocalAuth(),
     puppeteer: {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }
@@ -53,26 +53,21 @@ let isLoadingGroups = "Desconectado";
 //get
 let groups = [];
 const getGroups = async () => {
-    console.log("GetGroups En proceso.")
-    console.time('Tiempo de ejecución getGroups'); // Inicia la medición de tiempo
+    console.log("GetGroups en proceso.");
+    console.time("Tiempo de ejecución getGroups");
 
     try {
-        const chats = await client.getChats(); // Obtener todos los chats
+        const chats = await client.getContacts();
+        const mygroups = chats.filter(chat => chat.id.server === "g.us");
 
-
-
-        const mygroups = chats.filter(chat => chat.id.server === 'g.us' && !chat.isReadOnly); // Filtrar solo grupos activos
-
-        const formatedGroups = await Promise.allSettled(
+        const formatedGroups = await Promise.all(
             mygroups.map(async (group) => {
                 try {
-                    const profilePicUrl = await group.getContact().then(contact => contact.getProfilePicUrl());
-
-
+                    const profilePicUrl = await group.getProfilePicUrl().catch(() => null);
                     return {
                         name: group.name,
                         id: group.id._serialized,
-                        profilePicUrl: profilePicUrl || null // Manejar caso de foto no disponible
+                        profilePicUrl: profilePicUrl || null, // Si falla, asigna null
                     };
                 } catch (error) {
                     console.error(`Error obteniendo datos del grupo ${group.id._serialized}:`, error);
@@ -80,27 +75,20 @@ const getGroups = async () => {
                 }
             })
         );
-
         // Filtrar los grupos que fueron procesados correctamente
-        const filteredGroups = formatedGroups
-            .filter(result => result.status === 'fulfilled' && result.value !== null)
-            .map(result => result.value);
+        const filteredGroups = formatedGroups.filter(group => group !== null);
 
         isLoadingGroups = "Finalizado";
-        io.emit('isLoadingGroups', isLoadingGroups);
+        io.emit("isLoadingGroups", isLoadingGroups);
 
-
-
-        console.timeEnd('Tiempo de ejecución getGroups'); // Finaliza la medición de tiempo
+        console.timeEnd("Tiempo de ejecución getGroups");
         return filteredGroups;
-
     } catch (error) {
-        console.error('Error al obtener los grupos:', error);
-        console.timeEnd('Tiempo de ejecución getGroups');
+        console.error("Error al obtener los grupos:", error);
+        console.timeEnd("Tiempo de ejecución getGroups");
         return [];
     }
 };
-
 
 
 
@@ -108,35 +96,44 @@ const getGroups = async () => {
 
 const handleMessage = (messageObj) => {
 
-    const message = messageObj.message;
-    const recipients = messageObj.recipients;
-    const files = messageObj.files;
+    try {
+        const message = messageObj.message;
+        const recipients = messageObj.recipients;
+        const files = messageObj.files;
 
-    for (const groupID of recipients) {
-        const group = groups.find(chat => chat.id === groupID);
+        for (const groupID of recipients) {
+            const group = groups.find(chat => chat.id === groupID);
 
-        if (group) {
-            // Enviar mensaje de texto
-            console.log('Mensaje enviado al grupo:', group.name, "mensaje: ", message);
-            client.sendMessage(groupID, message);
+            if (group) {
+                // Enviar mensaje de texto
+                console.log('Mensaje enviado al grupo:', group.name, "mensaje: ", message);
+                client.sendMessage(groupID, message);
 
-            // Procesar archivos si existen
-            for (let key in files) {
-                let fileBuffer = files[key];  // Extraemos el buffer de la imagen
+                // Procesar archivos si existen
+                for (let key in files) {
+                    let fileBuffer = files[key];  // Extraemos el buffer de la imagen
 
-                // Convertir el buffer a MessageMedia
-                const media = new MessageMedia('image/jpeg', fileBuffer.toString('base64'), key);
+                    // Convertir el buffer a MessageMedia
+                    const media = new MessageMedia('image/jpeg', fileBuffer.toString('base64'), key);
 
-                // Enviar la imagen como mensaje
-                client.sendMessage(groupID, media).then(response => {
-                    console.log(`Archivo ${key} enviado con éxito:`);
-                }).catch(error => {
-                    console.error(`Error al enviar el archivo ${key}:`, error);
-                });
+                    // Enviar la imagen como mensaje
+                    client.sendMessage(groupID, media).then(response => {
+                        console.log(`Archivo ${key} enviado con éxito:`);
+                    }).catch(error => {
+                        console.error(`Error al enviar el archivo ${key}:`, error);
+                    });
+                }
+            } else {
+                console.log(`Grupo con ID "${groupID}" no encontrado. Ocurrió un error al enviar el mensaje.`);
             }
-        } else {
-            console.log(`Grupo con ID "${groupID}" no encontrado. Ocurrió un error al enviar el mensaje.`);
+            io.emit('messageState', true);
+
         }
+
+
+    } catch {
+        io.emit('messageState', false);
+
     }
 
 
@@ -152,37 +149,6 @@ const handleMessage = (messageObj) => {
 //Post
 
 
-const sendMessage = async (message) => {
-    console.log(message.message, message.recipients, message.files);
-
-    const myMessage = message.body;
-    const recipients = message.recipients;
-    const files = message.files || [];
-
-    for (const groupID of recipients) {
-        const group = groups.find(chat => chat.id === groupID);
-
-        if (group) {
-            // Enviar el mensaje de texto
-            // await client.sendMessage(group.id, myMessage);
-            console.log('Mensaje enviado al grupo:', group.name);
-
-            // Procesar archivos si existen
-            for (const file of files) {
-                const fileBuffer = Buffer.from(file.data.split(",")[1], "base64");
-
-                // Crear un objeto MessageMedia usando el buffer
-                const media = new MessageMedia(file.type, fileBuffer.toString('base64'), file.name);
-
-                // Enviar el archivo al grupo sin guardarlo
-                await client.sendMessage(group.id, media);
-                console.log(`Imagen enviada al grupo: ${group.name}`);
-            }
-        } else {
-            console.log(`Grupo con ID "${groupID}" no encontrado. Ocurrió un error al enviar el mensaje.`);
-        }
-    }
-};
 
 
 
@@ -242,18 +208,23 @@ client.on('ready', async () => {
     isLoadingGroups = "Cargando";
     io.emit('isLoadingGroups', isLoadingGroups);
 
-
-
     groups = await getGroups();
-    console.log('Grupos obtenidos:', groups);
+    // console.log('Grupos obtenidos:', groups);
     io.emit('groups-updated', groups);
+});
+
+client.on('disconnected', () => {
+    console.log("Cliente Whatsapp Desconectado")
+    isLoadingGroups = "Desconectado";
+    io.emit('isLoadingGroups', isLoadingGroups);
+
 });
 
 
 
 
 //Eventos de socket.io
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
     console.log('Cliente conectado a WebSocket');
 
     io.emit('groups-updated', groups);
@@ -285,9 +256,11 @@ io.on('connection', (socket) => {
         // Esperar un poco (puedes agregar un pequeño retraso si lo necesitas)
         console.log("Cliente cerrado, reiniciando...");
         status = "Desconectado";
-        io.emit('status', status);
 
+        io.emit('status', status);
+        groups = [];
         // Inicializar nuevamente el cliente
+
         client.initialize();
 
         console.log("Cliente reiniciado");
