@@ -5,59 +5,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grupos WhatsApp</title>
-
     <!--Tailwind-->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <!--Sweet Alert-->
     <!-- Script de Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- Script de Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css">
     <!-- Jquery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="/js/app.js"></script>
+    <!-- Estilos de DataTable -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css">
+    <!-- Font Aweasome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!-- //emojis -->
+    <!-- Emojis -->
     <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
+    <!-- Swiper -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
+    <!-- Enlaces -->
+    <script src="/js/app.js"></script>
     <link rel="stylesheet" href="/css/spinner.css">
     <link rel="stylesheet" href="/css/globals.css">
     <link rel="stylesheet" href="/css/datatable.css">
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-element-bundle.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Slab:wght@100..900&display=swap"
+        rel="stylesheet">
 
 </head>
 
 <body x-data>
-    <div id="ui-controllers" x-data="{ isQrOpen : false, }">
-
-        <header class="w-full py-1 bg-black text-white flex flex-col justify-center items-center  ">
-            <div class="w-[90vw]  px-4 bg-black rounded-2xl flex justify-between items-center">
+    <div id="ui-controllers" x-data="{ isQrOpen : false,  isUserMenu : false, isPlugModal : false}">
+        <header class="w-full h-18 bg-white flex flex-col justify-center items-center text-gray-800">
+            <div class="w-[90vw]  flex justify-between items-center">
                 <div class="flex flex-col ">
                     <h2 class="text-2xl font-semibold ">WhatsAppGroups</h2>
 
                 </div>
-                <nav>
-                    <ul class="flex gap-4">
-                        <li><a href="/">Inicio</a></li>
-                        <li x-on:click="isQrOpen = true" class="cursor-pointer"><i class="fa fa-qrcode"
-                                aria-hidden="true"></i></li>
-                        <li><a href="/groups">Enviados</a></li>
-                        <li> <button x-on:click.prevent="$store.services.cerrar()"
-                                class="text-center cursor-pointer">Cerrar
-                                Session</button> </li>
+                <div>
+                    <nav class="flex items-center gap-4">
+                        <ul class="flex items-center gap-4">
 
-                        <h2 id="status"></h2>
-                    </ul>
-                </nav>
+                            <li class="cursor-pointer">
+                                <i class="fa fa-bell-o" aria-hidden="true"></i>
+                            </li>
+                            <li x-on:click="isQrOpen = true" class="cursor-pointer text-lg">
+                                <i class="fa fa-qrcode" aria-hidden="true"></i>
+                            </li>
+                            <li> <span x-on:click="
+                                if ($store.services.status === 'Conectado') { 
+                                    isPlugModal = true; 
+                                } else { 
+                                   alert('Necesitas estar conectado para usar este módulo.')
+                                }" class="text-center cursor-pointer">
+                                    <i class="fa fa-plug" aria-hidden="true"></i>
+                                </span> </li>
+                        </ul>
+
+                        <div x-on:click="isUserMenu = !isUserMenu"
+                            class="relative flex items-center gap-2 h-full h-full cursor-pointer hover:bg-gray-100 px-4 py-2 rounded-2xl">
+
+                            <div id="user-icon"
+                                class="relative rounded-full w-8 h-8  flex justify-center items-center text-center">
+                                <svg stroke="black" fill="black" stroke-width="0" viewBox="0 0 512 512" height="35"
+                                    width="35" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M399 384.2C376.9 345.8 335.4 320 288 320l-64 0c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 16a72 72 0 1 0 0-144 72 72 0 1 0 0 144z">
+                                    </path>
+                                </svg>
+                                <div x-bind:class="{ 
+                                    'bg-green-400': $store.services.status == 'Conectado', 
+                                    'bg-gray-300': $store.services.status == 'Desconectado' 
+                                }" class="w-3 h-3 rounded-full  absolute right-[-2px] bottom-[1px] z-10">
+                                </div>
+                            </div>
+                            <div id="user-info" class="flex gap-1 items-center h-full ">
+                                <div class="leading-[9px] flex flex-col pt-2">
+                                    <span class="">Admin</span>
+                                    <span x-text="$store.services.status" id="status" class="text-sm"></span>
+                                </div>
+                                <i class="fa fa-caret-down" aria-hidden="true"></i>
+                            </div>
+
+                            <div x-on:click.stop x-show="isUserMenu" id="user-menu"
+                                class="absolute top-[100%] right-0 px-2  py-6 bg-white rounded-2xl w-[200px]">
+                                <ul>
+                                    <li
+                                        class="py-2 px-4 rounded-2xl cursor-pointer hover:bg-slate-100 flex items-center gap-2">
+                                        <i class="fa fa-user-o" aria-hidden="true"></i>
+                                        <span>Editar Cuenta</span>
+
+                                    </li>
+                                    <li
+                                        class="py-2 px-4 rounded-2xl cursor-pointer hover:bg-slate-100 flex items-center gap-2">
+                                        <svg stroke="currentColor" fill="none" stroke-width="0" viewBox="0 0 24 24"
+                                            height="20px" width="20px" xmlns="http://www.w3.org/2000/svg">
+                                            <path
+                                                d="M8.51428 20H4.51428C3.40971 20 2.51428 19.1046 2.51428 18V6C2.51428 4.89543 3.40971 4 4.51428 4H8.51428V6H4.51428V18H8.51428V20Z"
+                                                fill="currentColor"></path>
+                                            <path
+                                                d="M13.8418 17.385L15.262 15.9768L11.3428 12.0242L20.4857 12.0242C21.038 12.0242 21.4857 11.5765 21.4857 11.0242C21.4857 10.4719 21.038 10.0242 20.4857 10.0242L11.3236 10.0242L15.304 6.0774L13.8958 4.6572L7.5049 10.9941L13.8418 17.385Z"
+                                                fill="currentColor"></path>
+                                        </svg>
+                                        <span>Cerrar Sessión</span>
+
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </nav>
+                </div>
             </div>
         </header>
+
+
+        <div x-show="isPlugModal" id="modal-plug"
+            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30  z-50">
+
+            <div class="w-[500px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
+
+                <svg stroke="#99a1af" fill="#99a1af" stroke-width="0" viewBox="0 0 576 512" height="150px" width="150px"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M96 0C78.3 0 64 14.3 64 32l0 96 64 0 0-96c0-17.7-14.3-32-32-32zM288 0c-17.7 0-32 14.3-32 32l0 96 64 0 0-96c0-17.7-14.3-32-32-32zM32 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l0 32c0 77.4 55 142 128 156.8l0 67.2c0 17.7 14.3 32 32 32s32-14.3 32-32l0-67.2c12.3-2.5 24.1-6.4 35.1-11.5c-2.1-10.8-3.1-21.9-3.1-33.3c0-80.3 53.8-148 127.3-169.2c.5-2.2 .7-4.5 .7-6.8c0-17.7-14.3-32-32-32L32 160zM432 512a144 144 0 1 0 0-288 144 144 0 1 0 0 288zm59.3-180.7L454.6 368l36.7 36.7c6.2 6.2 6.2 16.4 0 22.6s-16.4 6.2-22.6 0L432 390.6l-36.7 36.7c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6L409.4 368l-36.7-36.7c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L432 345.4l36.7-36.7c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z">
+                    </path>
+                </svg>
+                <h2 class="text-xl font-semibold text-center mb-4">¿Estás seguro que deseas desvincular tu dispositivo?
+                </h2>
+                <div class="flex gap-2">
+                    <p x-on:click="isPlugModal = false"
+                        class="w-full cursor-pointer mt-6 bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                        Cancelar
+                    </p>
+                    <p x-on:click="$store.services.cerrar()"
+                        class="w-full cursor-pointer mt-6 bg-gray-400  text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                        Desvincular
+                    </p>
+                </div>
+            </div>
+
+
+
+
+        </div>
 
 
 
 
         <!--Modal Programar Whatsapps-->
         <div x-show="$store.services.isSendProgramated" id="send-programated"
-            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30 relative z-50">
+            class="w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30  z-50">
             <div class="w-[500px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
                 <h2 class="text-xl font-semibold text-center mb-4">Programar Publicación</h2>
                 <form x-on:submit.prevent="$store.services.handleMessageProgramated">
@@ -87,7 +187,7 @@
 
         <!--Modal QR-->
         <div x-show="isQrOpen" id="qr-container"
-            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            class=" z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
             <div class="w-[400px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
                 <div class="w-[250px] h-[250px] rounded-lg overflow-hidden">
                     <img id="qrImage" src="" alt="qr" class="w-full h-full object-contain">
@@ -100,7 +200,7 @@
 
         <!--Modal Send MSJ-->
         <div x-show="$store.services.modalSendMsj"
-            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            class=" z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
 
 
             <div class="w-[550px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
@@ -145,7 +245,7 @@
 
         <!--Modal SUCESSFUL MSJ-->
         <div x-show="$store.services.modalSucesfulMsj" id="modalStatusMessage"
-            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            class=" z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
 
             <div class="w-[550px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
                 <div class="flex flex-col gap-6 items-center">
@@ -173,7 +273,7 @@
 
         <!--Modal SUCESSFUL MSJ PROGRAMATED-->
         <div x-show="$store.services.modalSucesfulMsjProgramated" id="modalStatusMessage"
-            class="relative z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
+            class=" z-50 w-full h-full flex justify-center items-center fixed top-0 left-0 z-50 bg-black/30">
 
             <div class="w-[550px] h-[400px] bg-white rounded-2xl p-4 flex justify-center items-center flex-col gap-4">
                 <div class="flex flex-col gap-6 items-center">
@@ -194,39 +294,28 @@
 
         </div>
 
+        <!-- <div>
+            <div class="flex gap-4 items-center">
+                <div
+                    class="px-4 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-lg flex items-center justify-center">
+                    <span>Scanear QR</span>
+                </div>
+
+               
+            </div>
+
+        </div> -->
+
+
 
 
         <!-- Content -->
         <div class="w-full flex items-center flex-col bg-slate-100 pb-8 ">
             <!-- Header Content -->
-            <div class="bg-white rounded-lg px-8 py-8 w-[90vw] my-5 flex justify-between">
-                <h2 class="text-2xl font-bold">¡Bienvenido!</h2>
-                <div>
-                    <div class="flex gap-4 items-center">
-                        <div
-                            class="px-4 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-lg flex items-center justify-center">
-                            <span>Scanear QR</span>
-                        </div>
-                        <div
-                            class="overflow-hidden rounded-full w-10 h-10 bg-white flex justify-center items-center text-center">
-                            <svg stroke="black" fill="black" stroke-width="0" viewBox="0 0 512 512" height="35"
-                                width="35" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M399 384.2C376.9 345.8 335.4 320 288 320l-64 0c-47.4 0-88.9 25.8-111 64.2c35.2 39.2 86.2 63.8 143 63.8s107.8-24.7 143-63.8zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm256 16a72 72 0 1 0 0-144 72 72 0 1 0 0 144z">
-                                </path>
-                            </svg>
-
-                        </div>
-
-
-
-                        <div class="leading-0">
-                            <p class="font-bold text-lg">Administrador</p>
-                            <span class="text-gray-500 text-sm">cuenta y ajustes</span>
-                        </div>
-
-                    </div>
-
+            <div class="rounded-lg px-2 py-6 w-[90vw] flex">
+                <div class="leading-0 flex flex-col">
+                    <h2 class=" text-3xl font-medium text-gray-800">Bienvenido</h2>
+                    <span class="text-sm text-gray-600">Dashboard • Chat</span>
                 </div>
             </div>
             <!-- Content Content -->
@@ -252,7 +341,8 @@
 
                     <form x-on:submit.prevent="$store.services.modalSendMsj = true" class="relative h-full">
 
-                        <div x-show="$store.services.isPicker" id="emoji-picker" class="absolute z-10 top-[5%] right-[110%]"></div>
+                        <div x-show="$store.services.isPicker" id="emoji-picker"
+                            class="absolute z-10 top-[5%] right-[110%]"></div>
                         <div class="h-full">
                             <!-- Textarea for message -->
                             <textarea id="input-message" x-model="$store.services.message"

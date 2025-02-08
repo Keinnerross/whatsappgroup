@@ -19,7 +19,7 @@ socket.on('qr', (qrImage) => {
 
 // Status
 socket.on('status', (status) => {
-    document.getElementById('status').innerHTML = status;
+    Alpine.store("services").status = status
 });
 
 
@@ -31,7 +31,7 @@ socket.on('messageProgramatedState', (state) => {
         Alpine.store('services').modalSucesfulMsjProgramated = true;
 
         document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-            checkbox.checked = false; 
+            checkbox.checked = false;
         });
 
         Alpine.store("services").message = ""
@@ -242,6 +242,7 @@ document.addEventListener('alpine:init', () => {
         files: [],
         ifShowImages: false,
         isPicker: false,
+        status: "Desconectado",
         modalSendMsj: false,
         modalSucesfulMsj: false,
         isMessageProgramated: false,
@@ -324,8 +325,13 @@ document.addEventListener('alpine:init', () => {
 
         // Cerrar sesión
         cerrar() {
+
+
             console.log("Cerrando sesión");
             socket.emit("cerrar");
+
+
+
         }
     });
 

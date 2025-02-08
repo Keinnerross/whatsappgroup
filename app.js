@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new NoAuth(),
     puppeteer: {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }
@@ -158,7 +158,7 @@ const handleMessageProgramated = (messageObj) => {
         if (delay <= 0) {
             console.log("⚠️ La hora ya pasó, no se puede programar el mensaje.");
             console.log(`⚠️ X programado : ${targetDate}`);
-        io.emit('messageProgramatedState', "FechaPasada");
+            io.emit('messageProgramatedState', "FechaPasada");
 
             return;
         }
@@ -256,8 +256,8 @@ client.on('disconnected', () => {
 io.on('connection', async (socket) => {
     console.log('Cliente conectado a WebSocket');
 
-    io.emit('status', status);
     setTimeout(() => {
+        io.emit('status', status);
         io.emit('groups-updated', groups);
         io.emit('isLoadingGroups', isLoadingGroups);
 
@@ -293,7 +293,6 @@ io.on('connection', async (socket) => {
         // Esperar un poco (puedes agregar un pequeño retraso si lo necesitas)
         console.log("Cliente cerrado, reiniciando...");
         status = "Desconectado";
-
 
         io.emit('status', status);
         groups = [];
