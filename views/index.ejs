@@ -36,22 +36,32 @@
 
 </head>
 
-<body x-data>
-    <div id="ui-controllers" x-data="{ isQrOpen : false,  isUserMenu : false, isPlugModal : false}">
-        <header class="w-full h-18 bg-white flex flex-col justify-center items-center text-gray-800">
+<body x-data class="text-gray-800">
+    <div id="ui-controllers"
+        x-data="{ isQrOpen : false,  isUserMenu : false, isPlugModal : false, showTooltipBelt: false, showTooltipUser : false}">
+        <header
+            class="w-full h-20 bg-white flex flex-col justify-center items-center text-gray-800 shadow-xl border-[2px] border-solid border-gray-200">
             <div class="w-[90vw]  flex justify-between items-center">
-                <div class="flex flex-col ">
-                    <h2 class="text-2xl font-semibold ">WhatsAppGroups</h2>
+                <div class="flex gap-1 items-center">
+
+                    <div class="w-6 h-6 rounded-full flex justify-center items-center bg-violet-600">
+                        <i class="fa fa-bolt text-white" aria-hidden="true"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold pt-1 ">Wgroups</h2>
 
                 </div>
                 <div>
                     <nav class="flex items-center gap-4">
-                        <ul class="flex items-center gap-4">
-
-                            <li class="cursor-pointer">
+                        <ul class="flex items-center gap-4 text-lg">
+                            <li class="cursor-pointer relative inline-block"
+                                @click="showTooltipBelt = !showTooltipBelt">
                                 <i class="fa fa-bell-o" aria-hidden="true"></i>
+                                <div x-show="showTooltipBelt" x-transition
+                                    class="absolute top-[110%] right-[-60px] bg-gray-800 text-white p-2 rounded shadow-lg text-sm z-10">
+                                    Próximamente
+                                </div>
                             </li>
-                            <li x-on:click="isQrOpen = true" class="cursor-pointer text-lg">
+                            <li x-on:click="isQrOpen = true" class="cursor-pointer ">
                                 <i class="fa fa-qrcode" aria-hidden="true"></i>
                             </li>
                             <li> <span x-on:click="
@@ -81,25 +91,33 @@
                                 }" class="w-3 h-3 rounded-full  absolute right-[-2px] bottom-[1px] z-10">
                                 </div>
                             </div>
-                            <div id="user-info" class="flex gap-1 items-center h-full ">
+                            <div id="user-info" class=" flex gap-1 items-center h-full ">
                                 <div class="leading-[9px] flex flex-col pt-2">
                                     <span class="">Admin</span>
-                                    <span x-text="$store.services.status" id="status" class="text-sm"></span>
+                                    <span x-text="$store.services.status" id="status" x-bind:class="{ 
+                                        'text-sm': $store.services.status == 'Conectado', 
+                                        'text-xs': $store.services.status == 'Desconectado' 
+                                    }" class="w-[90px]"></span>
                                 </div>
                                 <i class="fa fa-caret-down" aria-hidden="true"></i>
                             </div>
 
                             <div x-on:click.stop x-show="isUserMenu" id="user-menu"
-                                class="absolute top-[100%] right-0 px-2  py-6 bg-white rounded-2xl w-[200px]">
+                                class="absolute top-[100%] right-0 px-2  py-6 bg-white rounded-2xl w-[200px] z-20">
                                 <ul>
-                                    <li
-                                        class="py-2 px-4 rounded-2xl cursor-pointer hover:bg-slate-100 flex items-center gap-2">
+                                    <li @click="showTooltipUser = !showTooltipUser"
+                                        class="py-2 px-4 rounded-2xl cursor-pointer hover:bg-[#FAFAFA] flex items-center gap-2">
                                         <i class="fa fa-user-o" aria-hidden="true"></i>
                                         <span>Editar Cuenta</span>
 
+                                        <div x-show="showTooltipUser" x-transition
+                                            class="absolute top-[30px] left-[-130px] bg-gray-800 text-white p-2 rounded shadow-lg text-sm">
+                                            Próximamente
+                                        </div>
+
                                     </li>
                                     <li
-                                        class="py-2 px-4 rounded-2xl cursor-pointer hover:bg-slate-100 flex items-center gap-2">
+                                        class="py-2 px-4 rounded-2xl cursor-pointer hover:bg-[#FAFAFA] flex items-center gap-2">
                                         <svg stroke="currentColor" fill="none" stroke-width="0" viewBox="0 0 24 24"
                                             height="20px" width="20px" xmlns="http://www.w3.org/2000/svg">
                                             <path
@@ -137,11 +155,11 @@
                 </h2>
                 <div class="flex gap-2">
                     <p x-on:click="isPlugModal = false"
-                        class="w-full cursor-pointer mt-6 bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                        class="w-full cursor-pointer mt-6 bg-violet-500 text-white py-2 px-4 rounded-full hover:bg-violet-700 transition">
                         Cancelar
                     </p>
                     <p x-on:click="$store.services.cerrar()"
-                        class="w-full cursor-pointer mt-6 bg-gray-400  text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                        class="w-full cursor-pointer mt-6 bg-gray-400  text-white py-2 px-4 rounded-full hover:bg-violet-700 transition">
                         Desvincular
                     </p>
                 </div>
@@ -163,20 +181,20 @@
                 <form x-on:submit.prevent="$store.services.handleMessageProgramated">
                     <label class="block text-sm font-medium text-gray-700">Fecha</label>
                     <input x-model="$store.services.date" type="date"
-                        class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
                         required>
 
                     <label class="block text-sm font-medium text-gray-700 mt-4">Hora</label>
                     <input x-model="$store.services.time" type="time"
-                        class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
                         required>
                     <div class="flex gap-2">
                         <p x-on:click="$store.services.isSendProgramated = false"
-                            class="w-full cursor-pointer mt-6 bg-blue-500 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                            class="w-full cursor-pointer mt-6 bg-violet-500 text-white py-2 px-4 rounded-full hover:bg-violet-700 transition">
                             Cancelar
                         </p>
                         <button type="submit"
-                            class="w-full cursor-pointer mt-6 bg-gray-400  text-white py-2 px-4 rounded-full hover:bg-blue-700 transition">
+                            class="w-full cursor-pointer mt-6 bg-gray-400  text-white py-2 px-4 rounded-full hover:bg-violet-700 transition">
                             Programar
                         </button>
                     </div>
@@ -193,7 +211,7 @@
                     <img id="qrImage" src="" alt="qr" class="w-full h-full object-contain">
                 </div>
                 <span x-on:click="isQrOpen = false"
-                    class="px-6 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
+                    class="px-6 py-2 bg-violet-400 hover:bg-violet-800 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
                 </span>
             </div>
         </div>
@@ -222,10 +240,10 @@
                 <div class="flex gap-4">
 
                     <span x-on:click="$store.services.modalSendMsj = false"
-                        class="px-4 py-2 bg-red-700 text-white font-semibold cursor-pointer rounded-full text-center">Cancelar
+                        class="px-4 py-2 bg-violet-400  hover:bg-violet-700 text-white font-semibold cursor-pointer rounded-full text-center">Cancelar
                     </span>
                     <p x-on:click="$store.services.sendMessage"
-                        class="px-4 py-2 bg-gray-400 text-white font-semibold cursor-pointer rounded-full flex">
+                        class="px-4 py-2 bg-gray-400 hover:bg-violet-700 text-white font-semibold cursor-pointer rounded-full flex">
                         <span class="flex gap-2 items-center"><svg stroke="currentColor" fill="currentColor"
                                 stroke-width="0" viewBox="0 0 16 16" height="15px" width="15px"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -260,7 +278,7 @@
                 <div class="flex gap-4">
 
                     <span x-on:click="$store.services.modalSucesfulMsj = false"
-                        class="px-6 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
+                        class="px-6 py-2 bg-violet-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
                     </span>
 
 
@@ -284,7 +302,7 @@
                 <div class="flex gap-4">
 
                     <span x-on:click="$store.services.modalSucesfulMsjProgramated = false"
-                        class="px-6 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
+                        class="px-6 py-2 bg-violet-400 text-white font-semibold cursor-pointer rounded-full text-center">Cerrar
                     </span>
 
 
@@ -297,7 +315,7 @@
         <!-- <div>
             <div class="flex gap-4 items-center">
                 <div
-                    class="px-4 py-2 bg-blue-400 text-white font-semibold cursor-pointer rounded-lg flex items-center justify-center">
+                    class="px-4 py-2 bg-violet-400 text-white font-semibold cursor-pointer rounded-lg flex items-center justify-center">
                     <span>Scanear QR</span>
                 </div>
 
@@ -310,44 +328,48 @@
 
 
         <!-- Content -->
-        <div class="w-full flex items-center flex-col bg-slate-100 pb-8 ">
-            <!-- Header Content -->
-            <div class="rounded-lg px-2 py-6 w-[90vw] flex">
-                <div class="leading-0 flex flex-col">
-                    <h2 class=" text-3xl font-medium text-gray-800">Bienvenido</h2>
-                    <span class="text-sm text-gray-600">Dashboard • Chat</span>
-                </div>
-            </div>
-            <!-- Content Content -->
-            <div class="flex justify-between  w-[90vw] gap-6 min-h-[500px]">
 
-                <div class="rounded-2xl w-[45%] bg-white flex justify-center min-h-[500px] p-6">
-                    <div class="w-full  h-[500px] overflow-y-scroll pr-4">
-                        <p id="isLoadingGroups" class="h-full"></p>
-                        <table id="groupTable">
-                            <thead>
-                                <tr>
-                                    <th class="hidden">Info Group</th>
-                                    <th class="hidden">Opciones</th>
-                                </tr>
-                            </thead>
-                            <tbody class="min-w-[50%] text-center"></tbody>
-                            <!-- Aquí se insertarán las filas dinámicamente -->
-                        </table>
+        <div id="body-content" class="w-full flex items-center flex-col bg-[#FAFAFA]  relative">
+            <div id="body-bg" class="h-[400px]"></div>
+            <!-- Header Content -->
+            <div class="w-full flex items-center flex-col pb-16 z-10">
+
+                <div class="rounded-lg px-2 py-8 w-[85vw] flex">
+                    <div class="leading-0 flex flex-col">
+                        <h2 class=" text-3xl font-semibold text-gray-800">Bienvenido!</h2>
+                        <span class="text-sm text-gray-600">Dashboard • Chat</span>
                     </div>
                 </div>
-                <div class="w-[55%]  rounded-2xl bg-white p-6 min-h-[500px]">
+                <!-- Content Content -->
+                <div class="flex justify-between  w-[85vw] gap-6 min-h-[500px]">
+
+                    <div class="rounded-2xl w-[45%] bg-white flex justify-center min-h-[500px] p-6 shadow-xs">
+                        <div class="w-full  h-[500px] overflow-y-scroll pr-4">
+                            <p id="isLoadingGroups" class="h-full"></p>
+                            <table id="groupTable">
+                                <thead>
+                                    <tr>
+                                        <th class="hidden">Info Group</th>
+                                        <th class="hidden">Opciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="min-w-[50%] text-center"></tbody>
+                                <!-- Aquí se insertarán las filas dinámicamente -->
+                            </table>
+                        </div>
+                    </div>
+                    <div class="w-[55%] rounded-2xl bg-white px-6 py-8 min-h-[500px] shadow-xs">
 
 
-                    <form x-on:submit.prevent="$store.services.modalSendMsj = true" class="relative h-full">
+                        <form x-on:submit.prevent="$store.services.modalSendMsj = true" class="relative h-full">
 
-                        <div x-show="$store.services.isPicker" id="emoji-picker"
-                            class="absolute z-10 top-[5%] right-[110%]"></div>
-                        <div class="h-full">
-                            <!-- Textarea for message -->
-                            <textarea id="input-message" x-model="$store.services.message"
-                                placeholder="Escribe un Mensaje"
-                                class="w-full outline-0 p-4 resize-none bg-slate-100 rounded-2xl" x-bind:class="{ 
+                            <div x-show="$store.services.isPicker" id="emoji-picker"
+                                class="absolute z-10 top-[5%] right-[110%]"></div>
+                            <div class="h-full">
+                                <!-- Textarea for message -->
+                                <textarea id="input-message" x-model="$store.services.message"
+                                    placeholder="Escribe un Mensaje"
+                                    class="w-full outline-0 p-4 resize-none bg-[#FAFAFA] rounded-2xl" x-bind:class="{ 
                                     'h-[72%]': $store.services.files.length > 0,
                                     'mb-2': $store.services.files.length > 0,
                                     'h-[89%]': $store.services.files.length === 0,
@@ -355,74 +377,124 @@
                                 }"></textarea>
 
 
-                            <!-- Miniatures Preview -->
-                            <div x-bind:class="{ 
+                                <!-- Miniatures Preview -->
+                                <div x-bind:class="{ 
                                 'h-[17%]': $store.services.files.length > 0,
                                 'h-0': $store.services.files.length === 0,
 
                             }">
 
-                                <div class="mt-2 flex gap-4 h-[100px]" x-show="$store.services.files.length > 0">
-                                    <template x-for="(file, index) in $store.services.files" :key="index">
-                                        <div class="w-16 relative group cursor-pointer">
-                                            <img :src="URL.createObjectURL(file)" alt=""
-                                                class="w-16 h-16 object-cover rounded-md ">
-                                            <button type="button" x-on:click="$store.services.removeFile(index)"
-                                                class="absolute top-0 left-0 w-16 h-16 bg-black/70 text-white p-1 rounded-md text-xs cursor-pointer opacity-0 group-hover:opacity-100 font-semibold ">X</button>
+                                    <div class="mt-2 flex gap-4 h-[100px]" x-show="$store.services.files.length > 0">
+                                        <template x-for="(file, index) in $store.services.files" :key="index">
+                                            <div class="w-16 relative group cursor-pointer">
+                                                <img :src="URL.createObjectURL(file)" alt=""
+                                                    class="w-16 h-16 object-cover rounded-md ">
+                                                <button type="button" x-on:click="$store.services.removeFile(index)"
+                                                    class="absolute top-0 left-0 w-16 h-16 bg-black/70 text-white p-1 rounded-md text-xs cursor-pointer opacity-0 group-hover:opacity-100 font-semibold ">X</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+
+
+
+                                <div class="flex justify-between">
+
+                                    <div id="controllers-action" class="flex gap-2 pb-2 ">
+                                        <label for="files"
+                                            class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center hover:bg-gray-300">
+                                            <i class="fa fa-picture-o text-gray-600" aria-hidden="true"></i>
+                                        </label>
+                                        <p x-on:click="$store.services.isPicker = !$store.services.isPicker"
+                                            class="cursor-pointer bg-gray-200 hover:bg-gray-300 w-10 h-10 rounded-full flex justify-center items-center">
+                                            <i class="fa fa-smile-o" aria-hidden="true"></i>
+                                        </p>
+                                        <input type="file" name="files" id="files" multiple accept=".jpg,.png"
+                                            x-on:change="$store.services.handleFileUpload" class="hidden">
+
+                                    </div>
+                                    <div id="button-send-programing"
+                                        class="h-10 w-[140px] bg-[#FAFAFA] flex overflow-hidden rounded-full text-white text-sm">
+                                        <button type="submit"
+                                            class="h-full w-[60%] bg-violet-600 hover:bg-violet-800 cursor-pointer font-semibold">Enviar</button>
+                                        <div x-on:click="$store.services.isSendProgramated  = true"
+                                            class="h-full w-[40%] bg-violet-700 flex justify-center items-center hover:bg-violet-800 cursor-pointer">
+
+                                            <i class="fa fa-clock-o" aria-hidden="true"></i>
                                         </div>
-                                    </template>
-                                </div>
-                            </div>
 
-
-
-
-                            <div class="flex justify-between">
-
-                                <div id="controllers-action" class="flex gap-2 pb-2 ">
-                                    <label for="files"
-                                        class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
-                                        <i class="fa fa-picture-o text-gray-600" aria-hidden="true"></i>
-                                    </label>
-                                    <p x-on:click="$store.services.isPicker = !$store.services.isPicker"
-                                        class="cursor-pointer bg-gray-200 w-10 h-10 rounded-full flex justify-center items-center">
-                                        <i class="fa fa-smile-o" aria-hidden="true"></i>
-                                    </p>
-                                    <input type="file" name="files" id="files" multiple accept=".jpg,.png"
-                                        x-on:change="$store.services.handleFileUpload" class="hidden">
-
-                                </div>
-                                <div id="button-send-programing"
-                                    class="h-10 w-[140px] bg-slate-100 flex overflow-hidden rounded-full text-white text-sm">
-                                    <button type="submit"
-                                        class="h-full w-[60%] bg-slate-700 hover:bg-slate-800 cursor-pointer font-semibold">Enviar</button>
-                                    <div x-on:click="$store.services.isSendProgramated  = true"
-                                        class="h-full w-[40%] bg-slate-400 flex justify-center items-center hover:bg-slate-800 cursor-pointer">
-
-                                        <i class="fa fa-clock-o" aria-hidden="true"></i>
                                     </div>
 
                                 </div>
 
+
+
                             </div>
 
 
 
-                        </div>
+                        </form>
 
-
-
-                    </form>
-
+                    </div>
                 </div>
             </div>
+
         </div>
 
 
         <!-- Footer -->
-        <footer class="bg-slate-200 text-center">
-            <h3>rossdev</h3>
+        <footer>
+            <div class="bg-white h-[200px] flex flex-col justify-center items-center">
+                <div class="flex justify-between  items-center w-[85vw]">
+                    <div id="logotype" class="flex gap-1 items-center">
+
+                        <div class="w-8 h-8 rounded-full flex justify-center items-center bg-violet-600">
+                            <i class="fa fa-bolt text-white" aria-hidden="true"></i>
+                        </div>
+                        <h2 class="text-xl font-bold pt-1 ">Wgroups</h2>
+
+                    </div>
+
+                    <div class="w-12 h-12 rounded-full flex justify-center items-center bg-violet-600 text-3xl">
+                        <i class="fa fa-bolt text-white" aria-hidden="true"></i>
+                    </div>
+
+                    <nav class="flex items-center gap-10 text-2xl">
+                        <ul class="flex items-center gap-4">
+                            <li class="cursor-pointer relative inline-block"
+                                @click="showTooltipBelt = !showTooltipBelt">
+                                <i class="fa fa-bell-o" aria-hidden="true"></i>
+                                <div x-show="showTooltipBelt" x-transition
+                                    class="absolute top-[110%] right-[-60px] bg-gray-800 text-white p-2 rounded shadow-lg text-sm">
+                                    Próximamente
+                                </div>
+                            </li>
+                            <li x-on:click="isQrOpen = true" class="cursor-pointer ">
+                                <i class="fa fa-qrcode" aria-hidden="true"></i>
+                            </li>
+                            <li> <span x-on:click="
+                                if ($store.services.status === 'Conectado') { 
+                                    isPlugModal = true; 
+                                } else { 
+                                   alert('Necesitas estar conectado para usar este módulo.')
+                                }" class="text-center cursor-pointer">
+                                    <i class="fa fa-plug" aria-hidden="true"></i>
+                                </span> </li>
+                        </ul>
+
+
+
+                    </nav>
+                </div>
+
+
+            </div>
+            <div class="w-full text-center pt-10 text-sm text-gray-500 font-medium py-4">
+                <span class="font-semibold">wgroups</span> tool by <a class="font-semibold cursor-pointer hover:text-violet-700" href="https://keinnerross.github.io/portfolioross/" target="_blank">KeinnerRoss</a>
+            </div>
         </footer>
+
         <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
     </div>
 

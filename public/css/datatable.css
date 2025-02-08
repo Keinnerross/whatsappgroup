@@ -26,7 +26,7 @@ div.dt-container div.dt-layout-row div.dt-layout-cell.dt-layout-end {
 
 .dt-search{
     width: 100%;
-    background-color: #f1f5f9 !important;
+    background-color: #FAFAFA !important;
     border-radius: 25px !important;
     display: flex;
     align-items: center;
@@ -60,7 +60,7 @@ div.dt-container div.dt-layout-row div.dt-layout-cell.dt-layout-end {
 
 .dataTable tbody tr:hover {
     max-width: 20% !important;
-   background-color: #f1f5f9;
+   background-color: #FAFAFA;
    border-radius: 10px !important;
    overflow: hidden;
    cursor: pointer;

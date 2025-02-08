@@ -108,12 +108,12 @@ const getGroups = async () => {
                     table.row.add([
                         `
                 <label class="flex h-12 gap-2 w-full h-full cursor-pointer" for="group-${group.id}">
-                    <div class="w-12 rounded-full overflow-hidden">
+                    <div class="w-10 h-10 rounded-full overflow-hidden">
                         <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""} class="object-cover" />
                     </div>
 
                     <div class="pt-2">
-                        <span class="text-lg text-gray-700">${group.name ? group.name : "Grupo sin Nombre"}</span>
+                        <span class="text-gray-700">${group.name ? group.name : "Grupo sin Nombre"}</span>
                     </div>
                 </label>               
             `,
