@@ -37,7 +37,7 @@ const io = socketIo(server, {
 
 // Rutas
 app.get('/', (req, res) => {
-    res.render('pages/login', { title: "Dashboard" });
+    res.render('pages/login', { title: "Login" });
 });
 
 
@@ -47,7 +47,7 @@ app.get('/login', (req, res) => {
 
 
 app.get('/dashboard', (req, res) => {
-    res.render('pages/dashboard', { title: 'Login' });
+    res.render('pages/dashboard', { title: 'Dashboard' });
 });
 
 // WhatsApp Client
