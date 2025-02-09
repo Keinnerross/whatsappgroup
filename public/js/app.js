@@ -49,6 +49,9 @@ socket.on('messageProgramatedState', (state) => {
 
 
 
+
+
+
 let msjResponse;
 socket.on('messageState', (state) => {
     if (state) {
@@ -73,6 +76,25 @@ socket.on('messageState', (state) => {
 
 
 
+//Login Socket
+socket.on('login-success', (data) => {
+    const { token } = data;
+    if (token) {
+        localStorage.setItem('jwtToken', token);
+
+        window.location.href = '/dashboard';
+    } else {
+        console.error("No se recibió un token válido.");
+    }
+});
+
+socket.on('login-error', () => {
+    alert('Credenciales incorrectas');
+    localStorage.removeItem('jwtToken'); // Eliminar el token expirado
+});
+
+
+
 
 let Idgroups = [];
 let table;
@@ -84,6 +106,14 @@ const getGroups = async () => {
     socket.on("groups-updated", (groups) => {
 
         setTimeout(() => {
+
+            if (table) {
+                table.destroy();
+                table = null;
+            }
+
+
+
             if (groups.length > 0) {
 
 
@@ -151,6 +181,21 @@ function sendMessage() {
 }
 
 
+//Autentificacación
+function isAuthenticated() {
+    const token = localStorage.getItem('jwtToken');
+    return !!token;
+}
+
+function checkAuth() {
+    const publicRoutes = ['/', '/login'];
+
+    if (isAuthenticated() && publicRoutes.includes(window.location.pathname)) {
+        window.location.href = '/dashboard'; // Redirige al dashboard si está autenticado y en una ruta pública
+    } else if (!isAuthenticated() && !publicRoutes.includes(window.location.pathname)) {
+        window.location.href = '/login'; // Redirige al login si no está autenticado y no está en una ruta pública
+    }
+}
 
 
 
@@ -193,8 +238,7 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
         </div>
     </div>`;
 
-        table.destroy(); // Destruye la instancia de DataTable
-        table = null;
+        table.clear().draw();
     } else if (isLoadingGroups === 'Finalizado') {
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
@@ -250,6 +294,21 @@ document.addEventListener('alpine:init', () => {
         isSendProgramated: false,
         time: "",
         date: "",
+        username: "",
+        userPassword: "",
+
+        handleLogin() {
+
+
+            const userData = {
+                username: Alpine.store("services").username,
+                password: Alpine.store("services").userPassword
+            }
+            socket.emit('login-connection', userData);
+
+
+            console.log(Alpine.store("services").username, Alpine.store("services").userPassword);
+        },
 
         handleMessageProgramated() {
 
@@ -325,14 +384,14 @@ document.addEventListener('alpine:init', () => {
 
         // Cerrar sesión
         cerrar() {
-
-
-            console.log("Cerrando sesión");
             socket.emit("cerrar");
+        },
+        cerrarSessionUsuario() {
+            localStorage.removeItem('jwtToken');
+            window.location.href = '/login';
 
 
-
-        }
+        },
     });
 
 
@@ -345,6 +404,13 @@ document.addEventListener('alpine:init', () => {
 
 
 document.addEventListener("DOMContentLoaded", function () {
+
+
+
+
+    checkAuth(); // Verifica la autenticación en las rutas protegidas
+
+
 
 
     const storedQr = localStorage.getItem('whatsapp-qr');

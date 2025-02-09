@@ -4,6 +4,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const QRCode = require('qrcode');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 
 //Server
 const app = express();
@@ -28,11 +29,26 @@ const io = socketIo(server, {
 });
 
 
+
+
+
+
+
+
 // Rutas
 app.get('/', (req, res) => {
-    res.render('index'); // Aquí pasas la variable status al renderizar
+    res.render('pages/login', { title: "Dashboard" });
 });
 
+
+app.get('/login', (req, res) => {
+    res.render('pages/login', { title: 'Login' });
+});
+
+
+app.get('/dashboard', (req, res) => {
+    res.render('pages/dashboard', { title: 'Login' });
+});
 
 // WhatsApp Client
 const client = new Client({
@@ -42,6 +58,11 @@ const client = new Client({
     }
 });
 
+
+//Credenciales Admin
+const STATIC_USERNAME = "admin";
+const STATIC_PASSWORD = "123456";
+const SECRET_KEY = 'admin123456';
 
 
 //Funciones (Controllers)
@@ -193,32 +214,12 @@ const handleMessageProgramated = (messageObj) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-//Conexiones:
-
-
-
+//Eventos de WhatsApp
 
 client.on('change_state', (state) => {
     console.log('Estado cambiado:', state);
 });
 
-
-
-
-
-//Eventos de WhatsApp
 client.on('qr', async (qr) => {
     console.log('QR recibido, enviando al frontend...');
     const qrImage = await QRCode.toDataURL(qr);
@@ -238,16 +239,19 @@ client.on('ready', async () => {
 
     groups = await getGroups();
 
-    // console.log('Grupos obtenidos:', groups);
     io.emit('groups-updated', groups);
 });
 
 client.on('disconnected', () => {
     console.log("Cliente Whatsapp Desconectado")
-    isLoadingGroups = "Desconectado";
-    io.emit('isLoadingGroups', isLoadingGroups);
-
+    status = "Desconectado";
+    io.emit('status', status);
+    groups = [];
+    io.emit('groups-updated', groups);
 });
+
+
+
 
 
 
@@ -255,14 +259,12 @@ client.on('disconnected', () => {
 //Eventos de socket.io
 io.on('connection', async (socket) => {
     console.log('Cliente conectado a WebSocket');
-
     setTimeout(() => {
-        io.emit('status', status);
-        io.emit('groups-updated', groups);
-        io.emit('isLoadingGroups', isLoadingGroups);
+        socket.emit('status', status);
+        socket.emit('groups-updated', groups);
+        socket.emit('isLoadingGroups', isLoadingGroups);
 
     }, 1000)
-
 
 
 
@@ -290,7 +292,6 @@ io.on('connection', async (socket) => {
         // Destruir la sesión de WhatsApp Web
         await client.destroy();
 
-        // Esperar un poco (puedes agregar un pequeño retraso si lo necesitas)
         console.log("Cliente cerrado, reiniciando...");
         status = "Desconectado";
 
@@ -300,9 +301,6 @@ io.on('connection', async (socket) => {
         io.emit('groups-updated', groups);
         io.emit('isLoadingGroups', isLoadingGroups);
 
-
-
-
         // Inicializar nuevamente el cliente
 
         client.initialize();
@@ -311,7 +309,30 @@ io.on('connection', async (socket) => {
     });
 
 
+
+
+
+    socket.on('login-connection', (data) => {
+
+        const { username, password } = data;
+
+        if (username === STATIC_USERNAME && password === STATIC_PASSWORD) {
+            // Generar un token JWT
+            const token = jwt.sign({ username: username }, SECRET_KEY, { expiresIn: '1h' });
+
+            socket.emit('login-success', {
+                message: 'Login exitoso',
+                token: token
+            });
+            console.log("usuario Logeado!")
+        } else {
+            socket.emit('login-error', { message: 'Usuario o contraseña incorrectos' });
+        }
+    });
+
+
     socket.on('disconnect', () => {
+
         console.log('Cliente desconectado');
     });
 });
