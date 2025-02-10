@@ -1,10 +1,13 @@
-const { Client, ClientInfo, LocalAuth, NoAuth, MessageMedia } = require('whatsapp-web.js');
+const { Client, ClientInfo, LocalAuth, NoAuth, MessageMedia, WAState } = require('whatsapp-web.js');
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const QRCode = require('qrcode');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+
 
 //Server
 const app = express();
@@ -54,7 +57,8 @@ app.get('/dashboard', (req, res) => {
 const client = new Client({
     authStrategy: new NoAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
     }
 });
 
@@ -100,7 +104,7 @@ const getGroups = async () => {
         const filteredGroups = formatedGroups.filter(group => group !== null);
 
         isLoadingGroups = "Finalizado";
-        io.emit("isLoadingGroups", isLoadingGroups);
+        io.emit('isLoadingGroups', isLoadingGroups);
 
         console.timeEnd("Tiempo de ejecución getGroups");
         return filteredGroups;
@@ -211,44 +215,123 @@ const handleMessageProgramated = (messageObj) => {
 }
 
 
+let isProcessingEndSession = false;
+let readyForEndSession = false;
+let isProcessing = false;
+let alreadyClientReady = false;
 
 
+
+
+
+const forcedSessionEnd = async () => {
+
+    if (!isProcessingEndSession && readyForEndSession) {
+
+        isProcessingEndSession = true;
+
+        console.log("Cerrando cliente...");
+        await client.destroy();
+        console.log("Cliente cerrado, reiniciando...");
+
+        status = "Desconectado";
+        groups = [];
+        isLoadingGroups = "Desconectado";
+        io.emit('status', status);
+        io.emit('isLoadingGroups', isLoadingGroups);
+        io.emit('groups-updated', groups);
+
+
+        try {
+            client.initialize();
+            console.log("Cliente reiniciado");
+        } catch (error) {
+            console.error("Error al reiniciar el cliente:", error);
+        }
+
+        isProcessingEndSession = false;
+        alreadyClientReady = false;
+
+    }
+
+    readyForEndSession = false;
+
+
+};
+
+
+const resetDisconnected = () => {
+    status = "Desconectado";
+    groups = [];
+    isLoadingGroups = "Desconectado";
+    io.emit('status', status);
+    io.emit('isLoadingGroups', isLoadingGroups);
+    io.emit('groups-updated', groups);
+    io.emit('whatsapp-disconnected-forced', true);
+}
 
 //Eventos de WhatsApp
 
-client.on('change_state', (state) => {
-    console.log('Estado cambiado:', state);
-});
 
+
+// Evento de conexión
+
+//Cliente Whatsapp
 client.on('qr', async (qr) => {
-    console.log('QR recibido, enviando al frontend...');
-    const qrImage = await QRCode.toDataURL(qr);
-    io.emit('qr', qrImage);
+
+    if (!alreadyClientReady) {
+        console.log('QR recibido, enviando al frontend...');
+        const qrImage = await QRCode.toDataURL(qr);
+        io.emit('qr', qrImage);
+        readyForEndSession = true;
+    }
+
 });
 
 
 
 
+
+
+
+
+// Evento de conexión
 client.on('ready', async () => {
-    console.log('Cliente WhatsApp Conectado');
-    status = "Conectado";
-    io.emit('status', status);
-    isLoadingGroups = "Cargando";
-    io.emit('isLoadingGroups', isLoadingGroups);
-
-
-    groups = await getGroups();
-
-    io.emit('groups-updated', groups);
+    if (!isProcessing && !alreadyClientReady) {
+        isProcessing = true;
+        try {
+            console.log('Cliente WhatsApp Conectado');
+            status = "Conectado";
+            io.emit('status', status);
+            isLoadingGroups = "Cargando";
+            io.emit('isLoadingGroups', isLoadingGroups);
+            groups = await getGroups();
+            io.emit('groups-updated', groups);
+            alreadyClientReady = true; // Marcamos que el cliente ya está listo
+        } catch (error) {
+            console.error("Error en client.on('ready'):", error);
+        } finally {
+            isProcessing = false; // Resetear siempre
+        }
+    }
 });
 
-client.on('disconnected', () => {
-    console.log("Cliente Whatsapp Desconectado")
-    status = "Desconectado";
-    io.emit('status', status);
-    groups = [];
-    io.emit('groups-updated', groups);
+// Evento de desconexión
+client.on('disconnected', async () => {
+    if (!isProcessing) {
+        isProcessing = true;
+        try {
+            console.log("Cliente WhatsApp Desconectado");
+            resetDisconnected();
+            alreadyClientReady = false; // Permitir reiniciar el cliente
+        } catch (error) {
+            console.error("Error en client.on('disconnected'):", error);
+        } finally {
+            isProcessing = false;
+        }
+    }
 });
+
 
 
 
@@ -257,12 +340,13 @@ client.on('disconnected', () => {
 
 
 //Eventos de socket.io
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
     console.log('Cliente conectado a WebSocket');
     setTimeout(() => {
         socket.emit('status', status);
-        socket.emit('groups-updated', groups);
         socket.emit('isLoadingGroups', isLoadingGroups);
+        socket.emit('groups-updated', groups);
+
 
     }, 1000)
 
@@ -286,26 +370,10 @@ io.on('connection', async (socket) => {
         sendMessage(myMessage);
     });
 
+    //Sockets cerrar
     socket.on('cerrar', async () => {
-        console.log("Cerrando cliente...");
+        await forcedSessionEnd()
 
-        // Destruir la sesión de WhatsApp Web
-        await client.destroy();
-
-        console.log("Cliente cerrado, reiniciando...");
-        status = "Desconectado";
-
-        io.emit('status', status);
-        groups = [];
-        isLoadingGroups = "Desconectado"
-        io.emit('groups-updated', groups);
-        io.emit('isLoadingGroups', isLoadingGroups);
-
-        // Inicializar nuevamente el cliente
-
-        client.initialize();
-
-        console.log("Cliente reiniciado");
     });
 
 
@@ -330,15 +398,14 @@ io.on('connection', async (socket) => {
         }
     });
 
-
+    //Socket Disconnected
     socket.on('disconnect', () => {
-
         console.log('Cliente desconectado');
     });
 });
 
 
-// Inicializar el cliente de WhatsApp
+// Inicializar el cliente de WhatsApp (No signfica que esté el dispositivo conectado.)
 client.initialize();
 
 // Iniciar el servidor

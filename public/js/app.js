@@ -19,7 +19,14 @@ socket.on('qr', (qrImage) => {
 
 // Status
 socket.on('status', (status) => {
-    Alpine.store("services").status = status
+    Alpine.store("services").status = status;
+});
+
+// Status
+socket.on('whatsapp-disconnected-forced', (res) => {
+    setTimeout(() => {
+        location.reload();
+    }, 1500)
 });
 
 
@@ -47,11 +54,6 @@ socket.on('messageProgramatedState', (state) => {
 });
 
 
-
-
-
-
-
 let msjResponse;
 socket.on('messageState', (state) => {
     if (state) {
@@ -75,7 +77,6 @@ socket.on('messageState', (state) => {
 });
 
 
-
 //Login Socket
 socket.on('login-success', (data) => {
     const { token } = data;
@@ -94,52 +95,42 @@ socket.on('login-error', () => {
 });
 
 
-
-
 let Idgroups = [];
 let table;
-
 //Get Groups
-const getGroups = async () => {
+socket.on("groups-updated", (groups) => {
+
+    setTimeout(() => {
+
+        if (table) {
+            table.destroy();
+            table = null;
+        }
+
+        if (groups.length > 0) {
+            table = new DataTable("#groupTable", {
+                searching: true,  // Activa el buscador
+                paging: false,     // Activa la paginación
+                info: false,  // Muestra información sobre la cantidad de registros
+                language: {
+                    searchPlaceholder: 'Busca tus grupos',
+                    emptyTable: "Aun no hay grupos disponibles 😖",
+                    infoEmpty: "No hay registros 🔍",
+                    zeroRecords: "No se encontraron resultados 🔍"
+                }
+
+            });
 
 
-    socket.on("groups-updated", (groups) => {
+            groups.forEach(group => {
+                Idgroups.push(group.id);
 
-        setTimeout(() => {
-
-            if (table) {
-                table.destroy();
-                table = null;
-            }
-
-
-
-            if (groups.length > 0) {
-
-
-                table = new DataTable("#groupTable", {
-                    searching: true,  // Activa el buscador
-                    paging: false,     // Activa la paginación
-                    info: false,  // Muestra información sobre la cantidad de registros
-                    language: {
-                        searchPlaceholder: 'Busca tus grupos',
-                        emptyTable: "Aun no hay grupos disponibles 😖",
-                        infoEmpty: "No hay registros 🔍",
-                        zeroRecords: "No se encontraron resultados 🔍"
-                    }
-
-                });
-
-
-                groups.forEach(group => {
-                    Idgroups.push(group.id);
-
-                    const profilePicUrl = group.profilePicUrl ? group.profilePicUrl : "/assets/group-profile.png";
-                    table.row.add([
-                        `
+                const profilePicUrl = group.profilePicUrl ? group.profilePicUrl : "/assets/group-profile.png";
+                table.row.add([
+                    `
                 <label class="flex h-12 gap-2 w-full h-full cursor-pointer" for="group-${group.id}">
                     <div class="w-10 h-10 rounded-full overflow-hidden">
-                        <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""} class="object-cover" />
+                        <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""}" class="object-cover" />
                     </div>
 
                     <div class="pt-2">
@@ -147,21 +138,22 @@ const getGroups = async () => {
                     </div>
                 </label>               
             `,
-                        `<input  id="group-${group.id}" type="checkbox" x-on:change="$store.services.handleGroupsSelected('${group.id}')"/>`
-                    ]);
-                });
-            } else {
-                table.row.add(["Cargando grupos...", "", ""]);
-            }
-            table.draw(); // Renderizar la tabla con los nuevos datos
-        }, delayLoading)
+                    `<input  id="group-${group.id}" type="checkbox" x-on:change="$store.services.handleGroupsSelected('${group.id}')"/>`
+                ]);
+            });
+        } else {
+            table.row.add(["Cargando grupos...", "", ""]);
+        }
+        table.draw(); // Renderizar la tabla con los nuevos datos
+    }, delayLoading)
 
 
 
-    });
+});
 
 
-}
+
+
 
 
 
@@ -203,10 +195,12 @@ function checkAuth() {
 //isLoading
 
 socket.on('isLoadingGroups', (isLoadingGroups) => {
+
     const loadingElement = document.getElementById('isLoadingGroups');
     const groupTable = document.getElementById('groupTable');
 
     if (isLoadingGroups === 'Cargando') {
+        // console.log("estado Cargando")
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
 
@@ -215,7 +209,12 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
             <div class="flex flex-col items-center">
                 <span class="loader"></span>
                 <div class="w-[300px] pt-8 text-center text-gray-700">
-                        <p>🚀 Preparando el despegue de los gurpos...</p>
+                <swiper-container autoplay="true" loop="true">
+                         <swiper-slide>🐱 Reuniendo stickers de gatitos... ¡Miau!</swiper-slide>
+                        <swiper-slide>👀 Espiando los grupos de la familia... ¡Cuidado con los tíos!</swiper-slide>
+                        <swiper-slide>🚀 Preparando el despegue de los gurpos...</swiper-slide>
+                </swiper-container>
+
                 </div>
             </div>
         </div>
@@ -224,6 +223,8 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
 
     } else if (isLoadingGroups === 'Desconectado') {
         // Caso Cargando
+        // // console.log("estado Desconectado")
+
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
 
@@ -238,8 +239,9 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
         </div>
     </div>`;
 
-        table.clear().draw();
     } else if (isLoadingGroups === 'Finalizado') {
+
+        // // console.log("Estado Finalizado")
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
 
@@ -248,7 +250,7 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
             <div class="flex flex-col items-center">
                 <span class="loader"></span>
                 <div class="w-[300px] pt-8 text-center text-gray-700">
-                         <swiper-container autoplay="true" loop="true">
+                    <swiper-container autoplay="true" loop="true">
                         <swiper-slide>🐱 Reuniendo stickers de gatitos... ¡Miau!</swiper-slide>
                         <swiper-slide>👀 Espiando los grupos de la familia... ¡Cuidado con los tíos!</swiper-slide>
                         <swiper-slide>🚀 Preparando el despegue de los gurpos...</swiper-slide>
@@ -307,7 +309,7 @@ document.addEventListener('alpine:init', () => {
             socket.emit('login-connection', userData);
 
 
-            console.log(Alpine.store("services").username, Alpine.store("services").userPassword);
+            // // console.log(Alpine.store("services").username, Alpine.store("services").userPassword);
         },
 
         handleMessageProgramated() {
@@ -319,7 +321,7 @@ document.addEventListener('alpine:init', () => {
                 hora: Alpine.store("services").time,
                 fecha: Alpine.store("services").date,
             }
-            console.log('handleMessageProgramated: ', messageObj)
+            // console.log('handleMessageProgramated: ', messageObj)
 
 
             socket.emit('handleMessageProgramated', messageObj);
@@ -328,13 +330,16 @@ document.addEventListener('alpine:init', () => {
 
         // Maneja la selección de grupos
         handleGroupsSelected(groupSelected) {
-            if (this.groupsSelected.includes(groupSelected)) {
-                this.groupsSelected = this.groupsSelected.filter((group) => group !== groupSelected);
-                console.log(this.groupsSelected);
+            let groups = Alpine.store("services").groupsSelected;
+
+            if (groups.includes(groupSelected)) {
+                // Modificamos el array original con splice (sin reasignar)
+                groups.splice(groups.indexOf(groupSelected), 1);
             } else {
-                this.groupsSelected.push(groupSelected);
-                console.log(this.groupsSelected);
+                groups.push(groupSelected);
             }
+
+            // console.log(groups);
         },
 
         // Maneja la carga de archivos
@@ -359,21 +364,21 @@ document.addEventListener('alpine:init', () => {
             });
 
             // Actualizar la lista de archivos seleccionados
-            this.files = validFiles;
+            Alpine.store('services').files = validFiles;
             Alpine.store("services").files = validFiles;
 
 
-            if (this.files.length > 0) {
-                console.log("Archivos cargados correctamente:", this.files);
+            if (Alpine.store('services').files.length > 0) {
+                // console.log("Archivos cargados correctamente:", Alpine.store('services').files);
 
             } else {
-                console.log("No se seleccionaron archivos válidos.");
+                // console.log("No se seleccionaron archivos válidos.");
             }
         },
 
         // Eliminar archivo de la lista
         removeFile(index) {
-            this.files.splice(index, 1);
+            Alpine.store('services').files.splice(index, 1);
         },
 
 
@@ -385,6 +390,11 @@ document.addEventListener('alpine:init', () => {
         // Cerrar sesión
         cerrar() {
             socket.emit("cerrar");
+
+            setTimeout(() => {
+                location.reload();
+
+            }, 2000)
         },
         cerrarSessionUsuario() {
             localStorage.removeItem('jwtToken');
@@ -418,7 +428,6 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('qrImage').src = storedQr;
     }
 
-    getGroups();
 
     //Emoji Picker
     const pickerOptions = {
