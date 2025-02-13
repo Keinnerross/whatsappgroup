@@ -1,2 +1,24 @@
+<VirtualHost *:443>
+   ServerName chatbot.theaupairjournal.com
 
-    
+   ProxyRequests Off
+   ProxyPreserveHost On
+   ProxyVia Full
+   <Proxy *>
+      Require all granted
+   </Proxy>
+
+   <Location /var/www/web/whatsappgroup>
+      ProxyPass http://127.0.0.1:3000
+      ProxyPassReverse http://127.0.0.1:3000
+   </Location>
+
+    <Directory "/var/www/web/whatsappgroup">
+    AllowOverride All
+    </Directory>
+
+     SSLEngine on
+
+    SSLCertificateFile /etc/ssl/certs/ssl-certificado.pem
+    SSLCertificateKeyFile /etc/ssl/private/ssl-certificado.key
+</VirtualHost>

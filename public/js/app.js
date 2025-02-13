@@ -433,9 +433,22 @@ document.addEventListener("DOMContentLoaded", function () {
     const pickerOptions = {
         onEmojiSelect: emoji => {
             const inputMessage = document.getElementById('input-message');
-            inputMessage.value += emoji.native;
+            const cursorPosition = inputMessage.selectionStart; // Obtiene la posición actual del cursor
+            const textBefore = inputMessage.value.substring(0, cursorPosition);
+            const textAfter = inputMessage.value.substring(cursorPosition);
+            
+            // Inserta el emoji en la posición del cursor
+            inputMessage.value = textBefore + emoji.native + textAfter;
+            
+            // Vuelve a posicionar el cursor después del emoji insertado
+            inputMessage.selectionStart = inputMessage.selectionEnd = cursorPosition + emoji.native.length;
+    
+            // Mantener el foco en el input
+            inputMessage.focus();
         }
     };
+    
+
     const picker = new EmojiMart.Picker(pickerOptions);
     document.getElementById('emoji-picker').appendChild(picker);
     picker.style.position = 'relative';

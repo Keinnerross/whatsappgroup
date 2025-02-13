@@ -409,6 +409,6 @@ io.on('connection', (socket) => {
 client.initialize();
 
 // Iniciar el servidor
-server.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+server.listen(port, '0.0.0.0', () => {
+    console.log(`Servidor corriendo en http://0.0.0.0:${port}`);
 });
