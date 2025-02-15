@@ -55,13 +55,12 @@ app.get('/dashboard', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new NoAuth(),
+    authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
     }
 });
-
 
 //Credenciales Admin
 const STATIC_USERNAME = "admin";
@@ -83,12 +82,22 @@ const getGroups = async () => {
 
     try {
         const chats = await client.getContacts();
-        const mygroups = chats.filter(chat => chat.id.server === "g.us");
+        const mygroups = chats.filter(chat => chat.id.server === "g.us" || chat.isMyContact === true);
+
+        console.log(mygroups)
 
         const formatedGroups = await Promise.all(
             mygroups.map(async (group) => {
+
+                let profilePicUrl;
                 try {
-                    const profilePicUrl = await group.getProfilePicUrl().catch(() => null);
+
+                    if (group.id.server === "g.us") {
+                        profilePicUrl = await group.getProfilePicUrl().catch(() => null);
+                    } else {
+                        profilePicUrl = false
+                    }
+
                     return {
                         name: group.name,
                         id: group.id._serialized,

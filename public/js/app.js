@@ -191,6 +191,37 @@ function checkAuth() {
 
 
 
+// Funcion pegado de imagen al chat desde el portapapeles
+document.addEventListener("paste", (event) => {
+    const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+    const files = [];
+
+    for (const item of items) {
+        if (item.type.includes("image")) {
+            const file = item.getAsFile();
+            files.push(file);
+        }
+    }
+
+    if (files.length > 0) {
+
+        if (Alpine.store("services").files.length <= 4 ) {
+            Alpine.store("services").files.push(...files);
+        } else {
+            alert("Solo se pueden agregar un máximo de 5 imagenes, elimina una para agregar otra.")
+        }
+    }
+});
+
+
+
+
+
+
+
+
+
+
 
 //isLoading
 
@@ -436,18 +467,18 @@ document.addEventListener("DOMContentLoaded", function () {
             const cursorPosition = inputMessage.selectionStart; // Obtiene la posición actual del cursor
             const textBefore = inputMessage.value.substring(0, cursorPosition);
             const textAfter = inputMessage.value.substring(cursorPosition);
-            
+
             // Inserta el emoji en la posición del cursor
             inputMessage.value = textBefore + emoji.native + textAfter;
-            
+
             // Vuelve a posicionar el cursor después del emoji insertado
             inputMessage.selectionStart = inputMessage.selectionEnd = cursorPosition + emoji.native.length;
-    
+
             // Mantener el foco en el input
             inputMessage.focus();
         }
     };
-    
+
 
     const picker = new EmojiMart.Picker(pickerOptions);
     document.getElementById('emoji-picker').appendChild(picker);
