@@ -181,6 +181,8 @@ const handleMessageProgramated = (messageObj) => {
     try {
         const { hora, fecha } = messageObj;
 
+        console.log(messageObj);
+
         const [year, month, day,] = fecha.split('-').map(Number);
         const [hours, minutes] = hora.split(':').map(Number);
 
