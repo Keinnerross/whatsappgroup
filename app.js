@@ -55,7 +55,7 @@ app.get('/dashboard', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new NoAuth(),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
