@@ -55,7 +55,7 @@ app.get('/dashboard', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new NoAuth(),
+    authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
@@ -126,55 +126,73 @@ const getGroups = async () => {
 
 
 
+
+
+
+
 //Handle Message
-
 const handleMessage = (messageObj) => {
-
     try {
         const message = messageObj.message;
         const recipients = messageObj.recipients;
         const files = messageObj.files;
 
+        // console.log(files)
+
+        let isSendTextImg = false;
+
         for (const groupID of recipients) {
             const group = groups.find(chat => chat.id === groupID);
 
             if (group) {
-                // Enviar mensaje de texto
-                console.log('Mensaje enviado al grupo:', group.name, "mensaje: ", message);
-                client.sendMessage(groupID, message);
+                if (files.length >= 1) {
+                    console.log("Si hay Files")
+                    // Procesar archivos si existen
+                    for (let key in files) {
+                        let fileBuffer = files[key];  // Extraemos el buffer de la imagen
 
-                // Procesar archivos si existen
-                for (let key in files) {
-                    let fileBuffer = files[key];  // Extraemos el buffer de la imagen
+                        // Convertir el buffer a MessageMedia
+                        const media = new MessageMedia('image/jpeg', fileBuffer.toString('base64'), key);
 
-                    // Convertir el buffer a MessageMedia
-                    const media = new MessageMedia('image/jpeg', fileBuffer.toString('base64'), key);
 
-                    // Enviar la imagen como mensaje
-                    client.sendMessage(groupID, media).then(response => {
-                        console.log(`Archivo ${key} enviado con éxito:`);
-                    }).catch(error => {
-                        console.error(`Error al enviar el archivo ${key}:`, error);
-                    });
+                        // Si no se ha enviado el mensaje de texto, enviarlo con la primera imagen
+                        if (!isSendTextImg) {
+
+                            isSendTextImg = true;
+                            console.log("Se envía imagen con texto")
+
+                            client.sendMessage(groupID, media, { caption: message ? message : "" }).then(response => {
+                                console.log(`Archivo ${key} enviado con éxito:`);
+                            }).catch(error => {
+                                console.error(`Error al enviar el archivo ${key}:`, error);
+                            });
+                        } else {
+                            console.log("Se envía solo imagen sin texto")
+                            client.sendMessage(groupID, media).then(response => {
+                                console.log(`Archivo ${key} enviado con éxito:`);
+                            }).catch(error => {
+                                console.error(`Error al enviar el archivo ${key}:`, error);
+                            });
+
+                        }
+
+                    }
+
+                } else {
+                    console.log('Mensaje enviado al grupo:', group.name, "mensaje: ", message);
+                    client.sendMessage(groupID, message);
                 }
             } else {
+                //Lo que sucede si no hay un grupo seleccionado.
                 console.log(`Grupo con ID "${groupID}" no encontrado. Ocurrió un error al enviar el mensaje.`);
             }
             io.emit('messageState', true);
 
         }
-
-
     } catch {
         io.emit('messageState', false);
 
     }
-
-
-    // console.log("title: ", message, "recipients: ", recipients, "files: ", files);
-
-
-
 }
 
 const handleMessageProgramated = (messageObj) => {

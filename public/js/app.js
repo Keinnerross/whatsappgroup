@@ -167,6 +167,8 @@ function sendMessage() {
     }
 
 
+    // console.log(messageObj.message);
+
 
     Alpine.store("services").modalSendMsj = false;
     socket.emit("handleMessage", messageObj);
@@ -205,16 +207,13 @@ document.addEventListener("paste", (event) => {
 
     if (files.length > 0) {
 
-        if (Alpine.store("services").files.length <= 4 ) {
+        if (Alpine.store("services").files.length <= 4) {
             Alpine.store("services").files.push(...files);
         } else {
             alert("Solo se pueden agregar un máximo de 5 imagenes, elimina una para agregar otra.")
         }
     }
 });
-
-
-
 
 
 
@@ -460,22 +459,27 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    //Emoji Picker
+    // Emoji Picker
     const pickerOptions = {
         onEmojiSelect: emoji => {
             const inputMessage = document.getElementById('input-message');
-            const cursorPosition = inputMessage.selectionStart; // Obtiene la posición actual del cursor
-            const textBefore = inputMessage.value.substring(0, cursorPosition);
-            const textAfter = inputMessage.value.substring(cursorPosition);
+            if (!inputMessage) return; // Evita errores si el input no existe
+
+            const cursorPosition = inputMessage.selectionStart ?? inputMessage.value.length; // Manejo de compatibilidad
+            const textBefore = inputMessage.value.slice(0, cursorPosition);
+            const textAfter = inputMessage.value.slice(cursorPosition);
 
             // Inserta el emoji en la posición del cursor
-            inputMessage.value = textBefore + emoji.native + textAfter;
+            inputMessage.value = `${textBefore}${emoji.native}${textAfter}`;
 
-            // Vuelve a posicionar el cursor después del emoji insertado
-            inputMessage.selectionStart = inputMessage.selectionEnd = cursorPosition + emoji.native.length;
+            // Reposicionar cursor después del emoji
+            const newPosition = cursorPosition + emoji.native.length;
+            inputMessage.setSelectionRange(newPosition, newPosition);
 
             // Mantener el foco en el input
             inputMessage.focus();
+
+            inputMessage.dispatchEvent(new Event('input', { bubbles: true }));
         }
     };
 
