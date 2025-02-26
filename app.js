@@ -55,7 +55,7 @@ app.get('/dashboard', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new NoAuth(),
+    authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
@@ -82,8 +82,21 @@ const getGroups = async () => {
 
     try {
         const chats = await client.getContacts();
-        const mygroups = chats.filter(chat => chat.id.server === "g.us" || chat.isMyContact === true);
+        const mygroups = chats
+            .filter(chat => {
+                const isGroup = chat.id.server === "g.us";
 
+                const isPersonalContact = chat.id._serialized.endsWith("@c.us") && chat.isMyContact === true;
+
+                return isGroup || isPersonalContact;
+            })
+            .sort((a, b) => {
+                const nameA = a.name || a.pushname || ""; 
+                const nameB = b.name || b.pushname || "";
+
+                return nameA.localeCompare(nameB); // Ordenar de A a Z
+            });
+hg
         console.log(mygroups)
 
         const formatedGroups = await Promise.all(
@@ -97,6 +110,10 @@ const getGroups = async () => {
                     } else {
                         profilePicUrl = false
                     }
+
+
+
+
 
                     return {
                         name: group.name,

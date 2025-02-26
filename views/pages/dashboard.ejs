@@ -301,7 +301,13 @@
                         <div class="rounded-2xl w-[45%] bg-white flex justify-center min-h-[500px] p-6 shadow-xs">
                             <div class="w-full  h-[500px] overflow-y-scroll pr-4">
                                 <p id="isLoadingGroups" class="h-full"></p>
-                                <table id="groupTable">
+
+                                <!-- Barra de Busqueda -->
+                                <input type="text" id="search-bar" x-model="$store.services.searchQuery"
+                                    x-on:input="$store.services.filterGroups()" placeholder="Filtra tus grupos o chats"
+                                    class="bg-[#FAFAFA] rounded-full px-3 py-2 mb-4 outline-none w-full">
+
+                                <table id="groupTable" class="w-full">
                                     <thead>
                                         <tr>
                                             <th class="hidden">Info Group</th>
@@ -314,8 +320,10 @@
                             </div>
                         </div>
                         <div class="w-[55%] rounded-2xl bg-white px-6 py-8 min-h-[500px] shadow-xs">
-
-
+                            <span x-bind:class="{ 'hidden': $store.services.groupsSelected.length === 0 }"
+                                class="fixed z-10 px-4 py-2 text-white bg-violet-600 hover:bg-violet-800 left-1/2 bottom-8 transform -translate-x-1/2 rounded-full text-sm cursor-pointer"
+                                x-text="$store.services.groupsSelected.length === 0 ? '' : `Destinatarios seleccionados: ${$store.services.groupsSelected.length}`">
+                            </span>
                             <form x-on:submit.prevent="$store.services.modalSendMsj = true" class="relative h-full">
 
                                 <div x-show="$store.services.isPicker" id="emoji-picker"
@@ -325,9 +333,9 @@
                                     <textarea id="input-message" x-model="$store.services.message"
                                         placeholder="Escribe un Mensaje"
                                         class="w-full outline-0 p-4 resize-none bg-[#FAFAFA] rounded-2xl" x-bind:class="{ 
-                                    'h-[72%]': $store.services.files.length > 0,
+                                    'h-[66%]': $store.services.files.length > 0,
                                     'mb-2': $store.services.files.length > 0,
-                                    'h-[89%]': $store.services.files.length === 0,
+                                    'h-[83%]': $store.services.files.length === 0,
                                     'mb-4': $store.services.files.length === 0,
                                 }"></textarea>
 
@@ -449,7 +457,6 @@
             </footer>
 
         </div>
-        <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
 
     </body>
 

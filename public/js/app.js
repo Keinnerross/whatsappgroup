@@ -95,62 +95,85 @@ socket.on('login-error', () => {
 });
 
 
-let Idgroups = [];
-let table;
+// let Idgroups = [];
+
+
+
+
+const showGroups = (data) => {
+    const groupTableBody = document.querySelector("#groupTable tbody");
+    groupTableBody.innerHTML = ""; // Limpiar las filas anteriores
+
+    // Almacenar todos los grupos actualizados
+    let groupsToDisplay = [];
+
+    // Determinar qué grupos mostrar si todos o filtrados
+    const query = Alpine.store('services').searchQuery;
+
+    if (query) {
+        // Convertir la consulta a string y asegurarse de que sea un string válido
+        const queryString = String(query).toLowerCase();
+
+        // Filtrar los grupos que coincidan con la consulta
+        groupsToDisplay = data.filter(group => {
+            // Convertir el nombre del grupo a string y asegurarse de que sea un string válido
+            const groupName = String(group.name || "").toLowerCase();
+            return groupName.includes(queryString);
+        });
+    } else {
+        // Si no hay consulta, mostrar todos los grupos
+        groupsToDisplay = data;
+    }
+
+    // Obtener los grupos seleccionados antes de renderizar
+    const selectedGroups = Alpine.store("services").groupsSelected;
+
+    if (groupsToDisplay.length > 0) {
+        groupsToDisplay.forEach(group => {
+            const profilePicUrl = group.profilePicUrl || "/assets/group-profile.png";
+            const row = document.createElement("div");
+            row.className = "hover:bg-[#FAFAFA] flex items-center w-full cursor-pointer rounded-lg";
+
+            // Verificar si el grupo está seleccionado
+            const isChecked = selectedGroups.includes(group.id);
+
+            row.innerHTML = `
+                <td>
+                    <label for="group-${group.id}" class="px-4 py-1 w-full cursor-pointer">
+                        <div class="flex items-center gap-2 py-2">
+                            <div class="w-10 h-10 rounded-full overflow-hidden">
+                                <img src="${profilePicUrl}" alt="${group.name || ""}" class="object-cover w-full h-full" />
+                            </div>
+                            <span class="text-gray-700">${group.name || "Grupo sin Nombre"}</span>
+                        </div>
+                    </label>
+                </td>
+                <td class="text-right">
+                    <input id="group-${group.id}" type="checkbox" ${
+                        isChecked ? "checked" : ""
+                    } x-on:change="$store.services.handleGroupsSelected('${group.id}')" />
+                </td>
+            `;
+
+            groupTableBody.appendChild(row);
+        });
+    } else {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td colspan="2" class="text-center py-2">No se encontraron grupos.</td>`;
+        groupTableBody.appendChild(row);
+    }
+};
+
+let groups = [];
+
 //Get Groups
-socket.on("groups-updated", (groups) => {
-
+socket.on("groups-updated", (data) => {
     setTimeout(() => {
-
-        if (table) {
-            table.destroy();
-            table = null;
-        }
-
-        if (groups.length > 0) {
-            table = new DataTable("#groupTable", {
-                searching: true,  // Activa el buscador
-                paging: false,     // Activa la paginación
-                info: false,  // Muestra información sobre la cantidad de registros
-                language: {
-                    searchPlaceholder: 'Busca tus grupos',
-                    emptyTable: "Aun no hay grupos disponibles 😖",
-                    infoEmpty: "No hay registros 🔍",
-                    zeroRecords: "No se encontraron resultados 🔍"
-                }
-
-            });
-
-
-            groups.forEach(group => {
-                Idgroups.push(group.id);
-
-                const profilePicUrl = group.profilePicUrl ? group.profilePicUrl : "/assets/group-profile.png";
-                table.row.add([
-                    `
-                <label class="flex h-12 gap-2 w-full h-full cursor-pointer" for="group-${group.id}">
-                    <div class="w-10 h-10 rounded-full overflow-hidden">
-                        <img src="${profilePicUrl ? profilePicUrl : '/assets/group-profile.png'}" alt="${group.name ? group.name : ""}" class="object-cover" />
-                    </div>
-
-                    <div class="pt-2">
-                        <span class="text-gray-700">${group.name ? group.name : "Grupo sin Nombre"}</span>
-                    </div>
-                </label>               
-            `,
-                    `<input  id="group-${group.id}" type="checkbox" x-on:change="$store.services.handleGroupsSelected('${group.id}')"/>`
-                ]);
-            });
-        } else {
-            table.row.add(["Cargando grupos...", "", ""]);
-        }
-        table.draw(); // Renderizar la tabla con los nuevos datos
-    }, delayLoading)
-
-
-
+        groups = data;
+        // console.log(groups);
+        showGroups(groups);
+    }, delayLoading);
 });
-
 
 
 
@@ -170,8 +193,14 @@ function sendMessage() {
     // console.log(messageObj.message);
 
 
-    Alpine.store("services").modalSendMsj = false;
-    socket.emit("handleMessage", messageObj);
+
+    if (Alpine.store("services").groupsSelected.length === 0) {
+        alert("no has seleccionado ningún destinatario")
+
+    } else {
+        Alpine.store("services").modalSendMsj = false;
+        socket.emit("handleMessage", messageObj);
+    }
 }
 
 
@@ -218,6 +247,10 @@ document.addEventListener("paste", (event) => {
 
 
 
+//Fuse Buscador
+
+
+
 
 
 
@@ -228,11 +261,14 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
 
     const loadingElement = document.getElementById('isLoadingGroups');
     const groupTable = document.getElementById('groupTable');
+    const serachBar = document.getElementById('search-bar');
 
     if (isLoadingGroups === 'Cargando') {
         // console.log("estado Cargando")
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
+        serachBar.classList.add('hidden');
+
 
         loadingElement.innerHTML = `
         <div class="w-full h-full flex justify-center items-center pt-10">
@@ -257,6 +293,7 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
 
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
+        serachBar.classList.add('hidden');
 
         loadingElement.innerHTML = `<div class="flex h-full justify-center items-center">
         <div class="flex flex-col justify-center h-full items-center text-gray-400">
@@ -274,6 +311,8 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
         // // console.log("Estado Finalizado")
         loadingElement.classList.remove('hidden');
         groupTable.classList.add('hidden');
+        serachBar.classList.add('hidden');
+
 
         loadingElement.innerHTML = `
         <div class="w-full h-full flex justify-center items-center pt-10">
@@ -293,6 +332,8 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
         setTimeout(() => {
             loadingElement.classList.add('hidden');
             groupTable.classList.remove('hidden');
+            serachBar.classList.remove('hidden');
+
 
         }, delayLoading)
 
@@ -313,6 +354,7 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
 ////////////////////////////////////////
 document.addEventListener('alpine:init', () => {
     Alpine.store('services', {
+        searchQuery: "",
         message: "",
         groupsSelected: [],
         files: [],
@@ -416,6 +458,13 @@ document.addEventListener('alpine:init', () => {
         sendMessage() {
             sendMessage();
         },
+
+        //Filtrar grupos desde el buscador
+        filterGroups() {
+            const query = Alpine.store('services').searchQuery;
+            showGroups(groups); //Aqui usamos la variable global groups;
+        },
+
 
         // Cerrar sesión
         cerrar() {
