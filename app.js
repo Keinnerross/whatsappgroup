@@ -96,7 +96,7 @@ const getGroups = async () => {
 
                 return nameA.localeCompare(nameB); // Ordenar de A a Z
             });
-hg
+
         console.log(mygroups)
 
         const formatedGroups = await Promise.all(
