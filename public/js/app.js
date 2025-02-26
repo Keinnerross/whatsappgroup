@@ -395,8 +395,16 @@ document.addEventListener('alpine:init', () => {
             }
             // console.log('handleMessageProgramated: ', messageObj)
 
+            if (Alpine.store("services").groupsSelected.length === 0) {
+                alert("no has seleccionado ningún destinatario")
+        
+            }else{
+                socket.emit('handleMessageProgramated', messageObj);
+            }
 
-            socket.emit('handleMessageProgramated', messageObj);
+
+
+
 
         },
 
