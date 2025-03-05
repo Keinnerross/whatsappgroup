@@ -7,6 +7,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const { profile } = require('console');
 
 
 //Server
@@ -74,6 +75,45 @@ let status = "Desconectado";
 let isLoadingGroups = "Desconectado";
 
 
+
+// Función para agregar un timeout a una promesa
+function withTimeout(promise, timeoutMs) {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(new Error('Timeout: la operación tardó demasiado'));
+        }, timeoutMs);
+
+        promise
+            .then((result) => {
+                clearTimeout(timeout); // Cancelar el timeout si la promesa se resuelve
+                resolve(result);
+            })
+            .catch((error) => {
+                clearTimeout(timeout); // Cancelar el timeout si la promesa es rechazada
+                reject(error);
+            });
+    });
+}
+
+// Función para obtener la URL de la imagen de perfil con timeout
+async function getProfilePicUrlWithTimeout(group, timeoutMs = 5000) {
+    try {
+        const profilePicUrl = await withTimeout(group.getProfilePicUrl(), timeoutMs);
+        return profilePicUrl;
+    } catch (error) {
+        console.error(`Error obteniendo la URL de perfil para el grupo ${group.id._serialized}:`, error.message);
+        return null; // Devuelve null si hay un error o timeout
+    }
+}
+
+
+
+
+
+
+
+
+
 //get
 let groups = [];
 const getGroups = async () => {
@@ -91,7 +131,7 @@ const getGroups = async () => {
                 return isGroup || isPersonalContact;
             })
             .sort((a, b) => {
-                const nameA = a.name || a.pushname || ""; 
+                const nameA = a.name || a.pushname || "";
                 const nameB = b.name || b.pushname || "";
 
                 return nameA.localeCompare(nameB); // Ordenar de A a Z
@@ -106,14 +146,12 @@ const getGroups = async () => {
                 try {
 
                     if (group.id.server === "g.us") {
-                        profilePicUrl = await group.getProfilePicUrl().catch(() => null);
+                        profilePicUrl = await getProfilePicUrlWithTimeout(group);
+                    } else if (group.id.server === "c.us") {
+                        profilePicUrl = await getProfilePicUrlWithTimeout(group);
                     } else {
-                        profilePicUrl = false
+                        profilePicUrl = false;
                     }
-
-
-
-
 
                     return {
                         name: group.name,
@@ -154,16 +192,15 @@ const handleMessage = (messageObj) => {
         const recipients = messageObj.recipients;
         const files = messageObj.files;
 
-        // console.log(files)
-
-        let isSendTextImg = false;
-
         for (const groupID of recipients) {
             const group = groups.find(chat => chat.id === groupID);
 
             if (group) {
                 if (files.length >= 1) {
-                    console.log("Si hay Files")
+                    console.log("Si hay Files");
+
+                    let isSendTextImg = false;
+
                     // Procesar archivos si existen
                     for (let key in files) {
                         let fileBuffer = files[key];  // Extraemos el buffer de la imagen
@@ -171,46 +208,42 @@ const handleMessage = (messageObj) => {
                         // Convertir el buffer a MessageMedia
                         const media = new MessageMedia('image/jpeg', fileBuffer.toString('base64'), key);
 
-
-                        // Si no se ha enviado el mensaje de texto, enviarlo con la primera imagen
                         if (!isSendTextImg) {
-
-                            isSendTextImg = true;
-                            console.log("Se envía imagen con texto")
-
+                            // Enviar la primera imagen con el texto
+                            console.log("Se envía imagen con texto");
                             client.sendMessage(groupID, media, { caption: message ? message : "" }).then(response => {
                                 console.log(`Archivo ${key} enviado con éxito:`);
                             }).catch(error => {
                                 console.error(`Error al enviar el archivo ${key}:`, error);
                             });
+
+                            isSendTextImg = true; // Marcar que ya se envió el texto con la primera imagen
                         } else {
-                            console.log("Se envía solo imagen sin texto")
+                            // Enviar solo la imagen (sin texto) para las imágenes restantes
+                            console.log("Se envía solo imagen sin texto");
                             client.sendMessage(groupID, media).then(response => {
                                 console.log(`Archivo ${key} enviado con éxito:`);
                             }).catch(error => {
                                 console.error(`Error al enviar el archivo ${key}:`, error);
                             });
-
                         }
-
                     }
-
                 } else {
+                    // Si no hay archivos, enviar solo el mensaje de texto
                     console.log('Mensaje enviado al grupo:', group.name, "mensaje: ", message);
                     client.sendMessage(groupID, message);
                 }
             } else {
-                //Lo que sucede si no hay un grupo seleccionado.
+                // Lo que sucede si no hay un grupo seleccionado.
                 console.log(`Grupo con ID "${groupID}" no encontrado. Ocurrió un error al enviar el mensaje.`);
             }
             io.emit('messageState', true);
-
         }
-    } catch {
+    } catch (error) {
+        console.error("Error en handleMessage:", error);
         io.emit('messageState', false);
-
     }
-}
+};
 
 const handleMessageProgramated = (messageObj) => {
     try {
@@ -258,7 +291,7 @@ const handleMessageProgramated = (messageObj) => {
     }
 
 
-}
+};
 
 
 let isProcessingEndSession = false;

@@ -35,7 +35,18 @@ socket.on('whatsapp-disconnected-forced', (res) => {
 socket.on('messageProgramatedState', (state) => {
     if (state == "Programado") {
         Alpine.store("services").isSendProgramated = false;
-        Alpine.store('services').modalSucesfulMsjProgramated = true;
+
+
+
+        setTimeout(() => {
+            Alpine.store('services').modalSucesfulMsjProgramated = true;
+        }, 1500)
+
+
+        setTimeout(() => {
+            Alpine.store('services').modalSucesfulMsjProgramated = false;
+
+        }, 4500)
 
         document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
             checkbox.checked = false;
@@ -50,7 +61,6 @@ socket.on('messageProgramatedState', (state) => {
     } else {
         alert("⚠️Ocurrio un error a programar mensaje")
     }
-
 });
 
 
@@ -60,6 +70,11 @@ socket.on('messageState', (state) => {
         setTimeout(() => {
             Alpine.store('services').modalSucesfulMsj = true;
         }, 1500)
+
+        setTimeout(() => {
+            Alpine.store('services').modalSucesfulMsj = false;
+        }, 4500)
+
     } else {
         alert("Algo Salió Mal")
     }
@@ -149,9 +164,8 @@ const showGroups = (data) => {
                     </label>
                 </td>
                 <td class="text-right">
-                    <input id="group-${group.id}" type="checkbox" ${
-                        isChecked ? "checked" : ""
-                    } x-on:change="$store.services.handleGroupsSelected('${group.id}')" />
+                    <input id="group-${group.id}" type="checkbox" ${isChecked ? "checked" : ""
+                } x-on:change="$store.services.handleGroupsSelected('${group.id}')" />
                 </td>
             `;
 
@@ -397,8 +411,8 @@ document.addEventListener('alpine:init', () => {
 
             if (Alpine.store("services").groupsSelected.length === 0) {
                 alert("no has seleccionado ningún destinatario")
-        
-            }else{
+
+            } else {
                 socket.emit('handleMessageProgramated', messageObj);
             }
 
