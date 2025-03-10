@@ -217,7 +217,7 @@ const handleMessage = (messageObj) => {
                                 console.error(`Error al enviar el archivo ${key}:`, error);
                             });
 
-                            isSendTextImg = true; // Marcar que ya se envió el texto con la primera imagen
+                            isSendTextImg = true;
                         } else {
                             // Enviar solo la imagen (sin texto) para las imágenes restantes
                             console.log("Se envía solo imagen sin texto");
@@ -263,7 +263,6 @@ const handleMessageProgramated = (messageObj) => {
             console.log("⚠️ La hora ya pasó, no se puede programar el mensaje.");
             console.log(`⚠️ X programado : ${targetDate}`);
             io.emit('messageProgramatedState', "FechaPasada");
-
             return;
         }
 

@@ -6,10 +6,6 @@ const socket = io();
 const delayLoading = 5000
 
 
-
-
-
-
 // QR Code Settings
 socket.on('qr', (qrImage) => {
     localStorage.setItem('whatsapp-qr', qrImage);
@@ -35,8 +31,6 @@ socket.on('whatsapp-disconnected-forced', (res) => {
 socket.on('messageProgramatedState', (state) => {
     if (state == "Programado") {
         Alpine.store("services").isSendProgramated = false;
-
-
 
         setTimeout(() => {
             Alpine.store('services').modalSucesfulMsjProgramated = true;
@@ -78,17 +72,6 @@ socket.on('messageState', (state) => {
     } else {
         alert("Algo Salió Mal")
     }
-
-    document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-        checkbox.checked = false; // Desmarcar cada checkbox
-    });
-
-    Alpine.store("services").message = ""
-    Alpine.store("services").files = []
-    Alpine.store("services").groupsSelected = []
-
-
-
 });
 
 
@@ -203,11 +186,6 @@ function sendMessage() {
         recipients: Alpine.store("services").groupsSelected,
     }
 
-
-    // console.log(messageObj.message);
-
-
-
     if (Alpine.store("services").groupsSelected.length === 0) {
         alert("no has seleccionado ningún destinatario")
 
@@ -215,6 +193,15 @@ function sendMessage() {
         Alpine.store("services").modalSendMsj = false;
         socket.emit("handleMessage", messageObj);
     }
+
+    document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+        checkbox.checked = false; // Desmarcar cada checkbox
+    });
+
+    Alpine.store("services").message = ""
+    Alpine.store("services").files = []
+    Alpine.store("services").groupsSelected = []
+
 }
 
 
