@@ -34,11 +34,6 @@ const io = socketIo(server, {
 
 
 
-
-
-
-
-
 // Rutas
 app.get('/', (req, res) => {
     res.render('pages/login', { title: "Login" });
@@ -56,7 +51,7 @@ app.get('/dashboard', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new NoAuth(),
+    authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
@@ -276,8 +271,16 @@ const handleMessageProgramated = (messageObj) => {
 
         client.sendMessage(myID, notiTemplate);
 
-        io.emit('messageProgramatedState', "Programado");
 
+
+
+
+
+
+
+        
+
+        io.emit('messageProgramatedState', "Programado");
 
         setTimeout(() => {
             handleMessage(messageObj);
@@ -288,8 +291,6 @@ const handleMessageProgramated = (messageObj) => {
         io.emit('messageProgramatedState', "Error");
 
     }
-
-
 };
 
 
