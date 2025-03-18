@@ -270,22 +270,25 @@
                         <div class="rounded-2xl w-[45%] bg-white flex justify-center min-h-[500px] p-6 shadow-xs">
                             <div class="w-full  h-[500px] overflow-y-scroll pr-4">
                                 <p id="isLoadingGroups" class="h-full"></p>
+                                <div id="tabs-controllers" class="flex gap-2 text-sm font-semibold text-white mb-2">
+                                    <div class="px-4 py-2 cursor-pointer rounded-full"
+                                        :class="{ 'bg-violet-500': $store.services.showChats, 'bg-gray-400': !$store.services.showChats }"
+                                        x-on:click="$store.services.showChats = true, $store.services.showProgrammed = false">
+                                        <p>Chats</p>
+                                    </div>
+                                    <div class="px-4 py-2 cursor-pointer rounded-full"
+                                        :class="{ 'bg-violet-500': $store.services.showProgrammed, 'bg-gray-400': !$store.services.showProgrammed }"
+                                        x-on:click="$store.services.showProgrammed = true, $store.services.showChats = false">
+                                        <p>Programados</p>
+                                    </div>
+
+                                </div>
+
 
                                 <%- include('../partials/searchBar.ejs') %>
 
-                                    <div id="tabs-controllers" class="flex gap-2 text-sm font-semibold text-white mb-2">
-                                        <div class="px-4 py-2 cursor-pointer rounded-full"
-                                            :class="{ 'bg-violet-500': $store.services.showChats, 'bg-gray-400': !$store.services.showChats }" x-on:click="$store.services.showChats = true, $store.services.showProgrammed = false" >
-                                            <p>Chats</p>
-                                        </div>
-                                        <div class="px-4 py-2 cursor-pointer rounded-full"
-                                            :class="{ 'bg-violet-500': $store.services.showProgrammed, 'bg-gray-400': !$store.services.showProgrammed }" x-on:click="$store.services.showProgrammed = true, $store.services.showChats = false">
-                                            <p>Programados</p>
-                                        </div>
 
-                                    </div>
-
-                                    <table id="groupTable" class="w-full">
+                                    <table x-show="$store.services.showChats" id="groupTable" class="w-full">
                                         <thead>
                                             <tr>
                                                 <th class="hidden">Info Group</th>
@@ -295,6 +298,14 @@
                                         <tbody class="min-w-[50%] text-center"></tbody>
                                         <!-- Aquí se insertarán las filas dinámicamente -->
                                     </table>
+
+                                    <div x-show="$store.services.showProgrammed">
+
+                                        <%- include('../partials/programatedMessages/programmedMessageList.ejs') %>
+
+                                    </div>
+
+
                             </div>
                         </div>
                         <div class="w-[55%] rounded-2xl bg-white px-6 py-8 min-h-[500px] shadow-xs">

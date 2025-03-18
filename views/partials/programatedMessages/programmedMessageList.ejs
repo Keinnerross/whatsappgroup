@@ -1,0 +1,22 @@
+<!-- programmedMessageList -->
+
+<div >
+    <div class="flex gap-2">
+        <template x-for="message in $store.services.messagesProgramatedList" :key="message.id">
+            <div class="p-4 border rounded-lg shadow-sm">
+                <h3 class="font-bold" x-text="'Mensaje ID: ' + message.id"></h3>
+                <p x-text="'Fecha: ' + new Date(message.date).toLocaleString()"></p>
+                <p x-text="'Mensaje: ' + message.message"></p>
+                <p x-text="'Imágenes: ' + message.images_count"></p>
+                <div class="mt-2">
+                    <h4 class="font-semibold">Grupos:</h4>
+                    <ul>
+                        <template x-for="group in message.groups" :key="group.group_name">
+                            <li x-text="group.  group_name + ' - ' + group.status"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>

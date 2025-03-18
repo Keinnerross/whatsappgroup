@@ -3,7 +3,7 @@
 // Sockets
 const socket = io();
 
-const delayLoading = 5000
+const delayLoading = 0
 // QR Code Settings
 socket.on('qr', (qrImage) => {
     localStorage.setItem('whatsapp-qr', qrImage);
@@ -131,7 +131,7 @@ const showGroups = (data) => {
                 </td>
                 <td class="text-right">
                     <input id="group-${group.id}" type="checkbox" ${isChecked ? "checked" : ""
-                } x-on:change="$store.services.handleGroupsSelected('${group.id}')" />
+                } x-on:change="$store.services.handleGroupsSelected('${group.id}','${group.name}')" />
                 </td>
             `;
 
@@ -145,7 +145,6 @@ const showGroups = (data) => {
 };
 
 let groups = [];
-
 //Get Groups
 socket.on("groups-updated", (data) => {
     setTimeout(() => {
@@ -154,6 +153,28 @@ socket.on("groups-updated", (data) => {
         showGroups(groups);
     }, delayLoading);
 });
+
+
+
+
+
+const showProgrammedMessages = (data) => {
+
+
+
+}
+
+
+//Get Programmed Messages
+socket.on("get-programmed-messsages", (data) => {
+    Alpine.store("services").messagesProgramatedList = data;
+
+    console.log(Alpine.store("services").messagesProgramatedList);
+});
+
+
+
+
 
 
 //Send Message Envíar mensaje, llamado en el context de alpine
@@ -320,6 +341,11 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
 
 
 
+
+
+
+
+
 //////////////////////////////////////////
 /////////////Varaibles AlpineJS /////////
 ////////////////////////////////////////
@@ -341,8 +367,11 @@ document.addEventListener('alpine:init', () => {
         date: "",
         username: "",
         userPassword: "",
-        showChats: true,
-        showProgrammed: false,
+        showChats: false,
+        showProgrammed: true,
+        messagesProgramatedList: [],
+
+
 
         handleLogin() {
             const userData = {
@@ -354,17 +383,20 @@ document.addEventListener('alpine:init', () => {
 
 
         // Maneja la selección de grupos
-        handleGroupsSelected(groupSelected) {
+        handleGroupsSelected(groupSelected, groupName) {
+
             let groups = Alpine.store("services").groupsSelected;
 
+
             if (groups.includes(groupSelected)) {
-                // Modificamos el array original con splice (sin reasignar)
                 groups.splice(groups.indexOf(groupSelected), 1);
             } else {
-                groups.push(groupSelected);
+                groups.push({
+                    id: groupSelected,
+                    name: groupName
+                });
             }
 
-            // console.log(groups);
         },
 
         // Maneja la carga de archivos

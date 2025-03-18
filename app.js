@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const { profile } = require('console');
-
+const db = require('./db/db.js');
 
 //Server
 const app = express();
@@ -174,6 +174,67 @@ const getGroups = async () => {
     }
 };
 
+const getProgrammedMessages = () => {
+    try {
+        // Consulta SQL para obtener los mensajes programados y sus grupos asociados
+        const query = `
+            SELECT 
+                mp.id AS message_id,
+                mp.date AS message_date,
+                mp.message AS message_body,
+                mp.images_count AS images_count,
+                gmp.group_name AS group_name,
+                gmp.status AS group_status
+            FROM 
+                messagesProgrammed mp
+            LEFT JOIN 
+                groupsMessagesProgrammed gmp
+            ON 
+                mp.id = gmp.messagesProgrammed_id
+            ORDER BY 
+                mp.date ASC;
+        `;
+
+        // Ejecutar la consulta
+        const rows = db.prepare(query).all();
+
+        // Construir el objeto de respuesta
+        const result = {};
+
+        rows.forEach((row) => {
+            const messageId = row.message_id;
+
+            // Si el mensaje no está en el resultado, lo agregamos
+            if (!result[messageId]) {
+                result[messageId] = {
+                    id: messageId,
+                    date: row.message_date,
+                    message: row.message_body,
+                    images_count: row.images_count,
+                    groups: [],
+                };
+            }
+
+            // Agregar el grupo y su estado al mensaje correspondiente
+            if (row.group_name) {
+                result[messageId].groups.push({
+                    group_name: row.group_name,
+                    status: row.group_status,
+                });
+            }
+        });
+
+        // Convertir el objeto a un array de mensajes
+        const messages = Object.values(result);
+
+        return messages;
+    } catch (e) {
+        console.error("Error al obtener los mensajes programados:", e);
+        return []; // Retornar un array vacío en caso de error
+    }
+};
+
+
 
 
 
@@ -184,7 +245,10 @@ const getGroups = async () => {
 const handleMessage = (messageObj) => {
     try {
         const message = messageObj.message;
-        const recipients = messageObj.recipients;
+        const recipients = messageObj.recipients.map((recipient)=> recipient.id);
+
+
+        console.log(`recipientes reales:${recipients}` )
         const files = messageObj.files;
 
         for (const groupID of recipients) {
@@ -269,18 +333,46 @@ const handleMessageProgramated = (messageObj) => {
 
         const notiTemplate = `🕐¡Mensaje programado para el día: ${dateFormated} *Cuerpo del mensaje:* "${message}", *Imagenes Enviadas:* ${files.length}, *Cantidad de Grupos:* ${recipients.length} grupos. `
 
+
+
         client.sendMessage(myID, notiTemplate);
 
 
+        const insertMessage = db.prepare(`
+            INSERT INTO messagesProgrammed (date, message, images_count)
+            VALUES (?, ?, ?)
+        `);
+        const messageResult = insertMessage.run(
+            targetDate.toISOString(), 
+            message,
+            files.length
+        );
+        const messageId = messageResult.lastInsertRowid; 
 
+        // Guardar los grupos asociados en la tabla `groupsMessagesProgrammed`
+        const insertGroup = db.prepare(`
+            INSERT INTO groupsMessagesProgrammed (messagesProgrammed_id, group_name, status)
+            VALUES (?, ?, ?)
+        `);
 
+            
 
+        recipients.forEach((group) => {
+            insertGroup.run(
+                messageId, // ID del mensaje programado
+                group.name,    // Nombre del grupo
+                'Programado' // Estado inicial
+            );
+        });
 
-
-
-        
+        console.log(`✅ Mensaje programado guardado en la base de datos con ID: ${messageId}`);
 
         io.emit('messageProgramatedState', "Programado");
+
+
+        const dataProgrammed = getProgrammedMessages();
+        io.emit('get-programmed-messsages', dataProgrammed);
+
 
         setTimeout(() => {
             handleMessage(messageObj);
@@ -386,7 +478,12 @@ client.on('ready', async () => {
             io.emit('isLoadingGroups', isLoadingGroups);
             groups = await getGroups();
             io.emit('groups-updated', groups);
-            alreadyClientReady = true; // Marcamos que el cliente ya está listo
+            alreadyClientReady = true; 
+
+            //Get Programmed Messages
+            const dataProgrammed = getProgrammedMessages();
+            io.emit('get-programmed-messsages', dataProgrammed);
+
         } catch (error) {
             console.error("Error en client.on('ready'):", error);
         } finally {
@@ -425,6 +522,10 @@ io.on('connection', (socket) => {
         socket.emit('status', status);
         socket.emit('isLoadingGroups', isLoadingGroups);
         socket.emit('groups-updated', groups);
+
+        const dataProgrammed = getProgrammedMessages();
+        io.emit('get-programmed-messsages', dataProgrammed);
+
 
 
     }, 1000)
