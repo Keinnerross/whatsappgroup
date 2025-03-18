@@ -1,21 +1,38 @@
 <!-- programmedMessageList -->
 
-<div >
-    <div class="flex gap-2">
-        <template x-for="message in $store.services.messagesProgramatedList" :key="message.id">
-            <div class="p-4 border rounded-lg shadow-sm">
-                <h3 class="font-bold" x-text="'Mensaje ID: ' + message.id"></h3>
-                <p x-text="'Fecha: ' + new Date(message.date).toLocaleString()"></p>
-                <p x-text="'Mensaje: ' + message.message"></p>
-                <p x-text="'Imágenes: ' + message.images_count"></p>
-                <div class="mt-2">
-                    <h4 class="font-semibold">Grupos:</h4>
-                    <ul>
+<div>
+    <div class="flex flex-col gap-2">
+        <template x-for="message in [...$store.services.messagesProgramatedList].sort((a, b) => b.id - a.id)"
+            :key="message.id">
+            <div class="p-4 rounded-lg shadow-sm cursor-pointer">
+                <details class="list-none">
+                    <summary class="list-none">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold" x-text="'N 00' + message.id"></h3>
+                            <p class="text-xs"
+                                x-text="'Programado para el: ' + new Date(message.date).toLocaleString()">
+                            </p>
+                        </div>
+                        <p class="text-sm" x-text="'Imágenes: ' + message.images_count"></p>
+
+                    </summary>
+                    <div class="text-sm">
+                        <div class=" my-8 text-sm">
+                            <p class="font-semibold mb-1">Mensaje: </p>
+                            <p class="text-xs" x-text="message.message"></p>
+                        </div>
+
                         <template x-for="group in message.groups" :key="group.group_name">
-                            <li x-text="group.  group_name + ' - ' + group.status"></li>
+
+                            <div class="flex items-center justify-between w-[30%] text-sm">
+                                <p x-text="group.group_name"></p>
+                                <p x-text="group.status"></p>
+                            </div>
+
+
                         </template>
-                    </ul>
-                </div>
+                    </div>
+                </details>
             </div>
         </template>
     </div>

@@ -101,14 +101,6 @@ async function getProfilePicUrlWithTimeout(group, timeoutMs = 5000) {
     }
 }
 
-
-
-
-
-
-
-
-
 //get
 let groups = [];
 const getGroups = async () => {
@@ -233,12 +225,6 @@ const getProgrammedMessages = () => {
         return []; // Retornar un array vacío en caso de error
     }
 };
-
-
-
-
-
-
 
 
 //Handle Message
