@@ -4,8 +4,6 @@
 const socket = io();
 
 const delayLoading = 5000
-
-
 // QR Code Settings
 socket.on('qr', (qrImage) => {
     localStorage.setItem('whatsapp-qr', qrImage);
@@ -25,9 +23,7 @@ socket.on('whatsapp-disconnected-forced', (res) => {
     }, 1500)
 });
 
-
-
-
+//Esta es la función que recibe la respuesta de los mensajes programados
 socket.on('messageProgramatedState', (state) => {
     if (state == "Programado") {
         Alpine.store("services").isSendProgramated = false;
@@ -36,19 +32,10 @@ socket.on('messageProgramatedState', (state) => {
             Alpine.store('services').modalSucesfulMsjProgramated = true;
         }, 1500)
 
-
         setTimeout(() => {
             Alpine.store('services').modalSucesfulMsjProgramated = false;
 
         }, 4500)
-
-        document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-
-        Alpine.store("services").message = ""
-        Alpine.store("services").files = []
-        Alpine.store("services").groupsSelected = []
 
     } else if (state == "FechaPasada") {
         alert("⚠️ La hora ya pasó, no se puede programar el mensaje.")
@@ -57,6 +44,7 @@ socket.on('messageProgramatedState', (state) => {
     }
 });
 
+//Esta es la función que recibe la respuesta de los mensajes directos
 
 let msjResponse;
 socket.on('messageState', (state) => {
@@ -91,11 +79,6 @@ socket.on('login-error', () => {
     alert('Credenciales incorrectas');
     localStorage.removeItem('jwtToken'); // Eliminar el token expirado
 });
-
-
-// let Idgroups = [];
-
-
 
 
 const showGroups = (data) => {
@@ -173,11 +156,7 @@ socket.on("groups-updated", (data) => {
 });
 
 
-
-
-
-
-//Send Message
+//Send Message Envíar mensaje, llamado en el context de alpine
 function sendMessage() {
 
     const messageObj = {
@@ -195,7 +174,7 @@ function sendMessage() {
     }
 
     document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
-        checkbox.checked = false; // Desmarcar cada checkbox
+        checkbox.checked = false;
     });
 
     Alpine.store("services").message = ""
@@ -203,6 +182,9 @@ function sendMessage() {
     Alpine.store("services").groupsSelected = []
 
 }
+
+
+
 
 
 //Autentificacación
@@ -248,16 +230,7 @@ document.addEventListener("paste", (event) => {
 
 
 
-//Fuse Buscador
-
-
-
-
-
-
-
 //isLoading
-
 socket.on('isLoadingGroups', (isLoadingGroups) => {
 
     const loadingElement = document.getElementById('isLoadingGroups');
@@ -347,9 +320,6 @@ socket.on('isLoadingGroups', (isLoadingGroups) => {
 
 
 
-
-
-
 //////////////////////////////////////////
 /////////////Varaibles AlpineJS /////////
 ////////////////////////////////////////
@@ -371,43 +341,17 @@ document.addEventListener('alpine:init', () => {
         date: "",
         username: "",
         userPassword: "",
+        showChats: true,
+        showProgrammed: false,
 
         handleLogin() {
-
-
             const userData = {
                 username: Alpine.store("services").username,
                 password: Alpine.store("services").userPassword
             }
             socket.emit('login-connection', userData);
-
-
-            // // console.log(Alpine.store("services").username, Alpine.store("services").userPassword);
         },
 
-        handleMessageProgramated() {
-
-            const messageObj = {
-                message: Alpine.store("services").message,
-                files: Alpine.store("services").files,
-                recipients: Alpine.store("services").groupsSelected,
-                hora: Alpine.store("services").time,
-                fecha: Alpine.store("services").date,
-            }
-            // console.log('handleMessageProgramated: ', messageObj)
-
-            if (Alpine.store("services").groupsSelected.length === 0) {
-                alert("no has seleccionado ningún destinatario")
-
-            } else {
-                socket.emit('handleMessageProgramated', messageObj);
-            }
-
-
-
-
-
-        },
 
         // Maneja la selección de grupos
         handleGroupsSelected(groupSelected) {
@@ -463,9 +407,38 @@ document.addEventListener('alpine:init', () => {
         },
 
 
-        // Enviar el mensaje
+        // Enviar el mensaje directo
         sendMessage() {
             sendMessage();
+        },
+
+        //Envíar mensaje programado
+        handleMessageProgramated() {
+            const messageObj = {
+                message: Alpine.store("services").message,
+                files: Alpine.store("services").files,
+                recipients: Alpine.store("services").groupsSelected,
+                hora: Alpine.store("services").time,
+                fecha: Alpine.store("services").date,
+            }
+
+            if (Alpine.store("services").groupsSelected.length === 0) {
+                alert("no has seleccionado ningún destinatario")
+
+            } else {
+                socket.emit('handleMessageProgramated', messageObj);
+
+                document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+
+                Alpine.store("services").message = "";
+                Alpine.store("services").files = [];
+                Alpine.store("services").groupsSelected = [];
+
+                console.log("mensajes programado, y borrado estado desde el cliente")
+            }
+
         },
 
         //Filtrar grupos desde el buscador
@@ -475,7 +448,7 @@ document.addEventListener('alpine:init', () => {
         },
 
 
-        // Cerrar sesión
+        // Cerrar sesión Whatsapp Client
         cerrar() {
             socket.emit("cerrar");
 
@@ -484,11 +457,11 @@ document.addEventListener('alpine:init', () => {
 
             }, 2000)
         },
+
+
         cerrarSessionUsuario() {
             localStorage.removeItem('jwtToken');
             window.location.href = '/login';
-
-
         },
     });
 

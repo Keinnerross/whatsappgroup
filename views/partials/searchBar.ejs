@@ -1,0 +1,4 @@
+<!-- searchBar.ejs --> 
+<input type="text" id="search-bar" x-model="$store.services.searchQuery"
+x-on:input="$store.services.filterGroups()" placeholder="Filtra tus grupos o chats"
+class="bg-[#FAFAFA] rounded-full px-3 py-2 mb-4 outline-none w-full">

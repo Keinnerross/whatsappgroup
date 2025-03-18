@@ -230,7 +230,6 @@
                 class="  rounded-full px-6 py-4 flex justify-center items-center gap-4 fixed bottom-10 right-10 z-50 bg-green-500 shadow-sm cursor-pointer"
                 x-transition:enter.origin.right x-transition:leave.origin.right>
                 <div class="flex gap-2 items-center text-lg text-white">
-
                     <i class="fa fa-check-circle   " aria-hidden="true"></i>
                     <p class="font-medium text-sm text-white"> ¡Mensaje Enviado!
                     </p>
@@ -240,7 +239,7 @@
 
 
             <!--Modal SUCESSFUL MSJ PROGRAMATED-->
-            <div  x-show="$store.services.modalSucesfulMsjProgramated"
+            <div x-show="$store.services.modalSucesfulMsjProgramated"
                 class="  rounded-full px-6 py-4 flex justify-center items-center gap-4 fixed bottom-10 right-10 z-50 bg-green-500 shadow-sm cursor-pointer"
                 x-transition:enter.origin.right x-transition:leave.origin.right>
                 <div class="flex gap-2 items-center text-lg text-white">
@@ -251,7 +250,6 @@
 
                 </div>
             </div>
-
 
             <!-- Content -->
 
@@ -273,21 +271,30 @@
                             <div class="w-full  h-[500px] overflow-y-scroll pr-4">
                                 <p id="isLoadingGroups" class="h-full"></p>
 
-                                <!-- Barra de Busqueda -->
-                                <input type="text" id="search-bar" x-model="$store.services.searchQuery"
-                                    x-on:input="$store.services.filterGroups()" placeholder="Filtra tus grupos o chats"
-                                    class="bg-[#FAFAFA] rounded-full px-3 py-2 mb-4 outline-none w-full">
+                                <%- include('../partials/searchBar.ejs') %>
 
-                                <table id="groupTable" class="w-full">
-                                    <thead>
-                                        <tr>
-                                            <th class="hidden">Info Group</th>
-                                            <th class="hidden">Opciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="min-w-[50%] text-center"></tbody>
-                                    <!-- Aquí se insertarán las filas dinámicamente -->
-                                </table>
+                                    <div id="tabs-controllers" class="flex gap-2 text-sm font-semibold text-white mb-2">
+                                        <div class="px-4 py-2 cursor-pointer rounded-full"
+                                            :class="{ 'bg-violet-500': $store.services.showChats, 'bg-gray-400': !$store.services.showChats }" x-on:click="$store.services.showChats = true, $store.services.showProgrammed = false" >
+                                            <p>Chats</p>
+                                        </div>
+                                        <div class="px-4 py-2 cursor-pointer rounded-full"
+                                            :class="{ 'bg-violet-500': $store.services.showProgrammed, 'bg-gray-400': !$store.services.showProgrammed }" x-on:click="$store.services.showProgrammed = true, $store.services.showChats = false">
+                                            <p>Programados</p>
+                                        </div>
+
+                                    </div>
+
+                                    <table id="groupTable" class="w-full">
+                                        <thead>
+                                            <tr>
+                                                <th class="hidden">Info Group</th>
+                                                <th class="hidden">Opciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="min-w-[50%] text-center"></tbody>
+                                        <!-- Aquí se insertarán las filas dinámicamente -->
+                                    </table>
                             </div>
                         </div>
                         <div class="w-[55%] rounded-2xl bg-white px-6 py-8 min-h-[500px] shadow-xs">
