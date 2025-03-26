@@ -251,6 +251,19 @@
                 </div>
             </div>
 
+            <!--Modal SUCESSFUL MSJ PROGRAMATED-->
+            <div x-show="$store.services.modalSucesfulMsjDelete"
+                class="  rounded-full px-6 py-4 flex justify-center items-center gap-4 fixed bottom-10 right-10 z-50 bg-green-500 shadow-sm cursor-pointer"
+                x-transition:enter.origin.right x-transition:leave.origin.right>
+                <div class="flex gap-2 items-center text-lg text-white">
+
+                    <i class="fa fa-clock-o" aria-hidden="true"></i>
+                    <p class="font-medium text-sm text-white"> ¡Mensaje Eliminado/Cancelado!
+                    </p>
+
+                </div>
+            </div>
+
             <!-- Content -->
 
             <div id="body-content" class="w-full flex items-center flex-col bg-[#FAFAFA]  relative">
@@ -285,8 +298,8 @@
                             </div>
 
                             <div class="w-full  h-[500px] overflow-y-scroll pr-4 pt-4">
-                                <p id="isLoadingGroups" class="h-full "></p>
 
+                                <p x-show="$store.services.showChats" id="isLoadingGroups" class="h-full "></p>
 
 
                                 <div x-show="$store.services.showChats">

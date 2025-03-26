@@ -32,12 +32,23 @@ socket.on('messageProgramatedState', (state) => {
 
         setTimeout(() => {
             Alpine.store('services').modalSucesfulMsjProgramated = false;
-
         }, 4500)
 
     } else if (state == "FechaPasada") {
         alert("⚠️ La hora ya pasó, no se puede programar el mensaje.")
-    } else {
+    }
+    else if (state == "Eliminado") {
+       
+        setTimeout(() => {
+            Alpine.store('services').modalSucesfulMsjDelete = true;
+        }, 1500)
+
+        setTimeout(() => {
+            Alpine.store('services').modalSucesfulMsjDelete = false;
+        }, 4500)
+
+    }
+    else {
         alert("⚠️Ocurrio un error a programar mensaje")
     }
 });
@@ -360,6 +371,7 @@ document.addEventListener('alpine:init', () => {
         modalSucesfulMsj: false,
         isMessageProgramated: false,
         modalSucesfulMsjProgramated: false,
+        modalSucesfulMsjDelete: false,
         isSendProgramated: false,
         time: "",
         date: "",
@@ -482,6 +494,13 @@ document.addEventListener('alpine:init', () => {
 
         },
 
+        deleteProgramatedMessage(id) {
+
+            socket.emit("deleteProgramatedMessage", id);
+
+
+        },
+
         //Filtrar grupos desde el buscador
         filterGroups() {
             const query = Alpine.store('services').searchQuery;
@@ -521,9 +540,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     checkAuth(); // Verifica la autenticación en las rutas protegidas
-
-
-
 
     const storedQr = localStorage.getItem('whatsapp-qr');
     if (storedQr) {

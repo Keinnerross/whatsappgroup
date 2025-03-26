@@ -1,36 +1,115 @@
 <!-- programmedMessageList -->
 <div>
-    <div class="flex flex-col gap-2">
-        <template x-for="message in [...$store.services.messagesProgramatedList].sort((a, b) => b.id - a.id)"
+    <div x class="flex flex-col gap-2">
+        <template x-show="$store.services.messagesProgramatedList.length > 0"
+            x-for="message in [...$store.services.messagesProgramatedList].sort((a, b) => b.id - a.id)"
             :key="message.id">
-            <div class="p-4 rounded-lg cursor-pointer hover:bg-gray-100">
-                <details class="list-none">
-                    <summary class="list-none">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-bold" x-text="'N 00' + message.id"></h3>
-                            <p class="text-xs"
-                                x-text="'Programado para el: ' + new Date(message.date).toLocaleString()">
-                            </p>
+            <div class="rounded-lg cursor-pointer hover:bg-gray-50">
+                <div x-data="{ open: false, modalControllers: false }">
+                    <!-- Controlamos manualmente el estado de open en el details -->
+                    <summary @click="open = !open" class="list-none cursor-pointer p-4 ">
+                        <div class="flex items-center gap-2 relative">
+                            <div class="bg-gray-50 rounded-xl p-2">
+                                <svg class="w-6 h-6 text-gray-200" stroke="currentColor" fill="currentColor"
+                                    stroke-width="0" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M64 0C28.7 0 0 28.7 0 64L0 352c0 35.3 28.7 64 64 64l96 0 0 80c0 6.1 3.4 11.6 8.8 14.3s11.9 2.1 16.8-1.5L309.3 416 448 416c35.3 0 64-28.7 64-64l0-288c0-35.3-28.7-64-64-64L64 0z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex gap-1 items-center">
+                                    <h3 class="font-semibold text-gray-700"
+                                        x-text="String('0000' + message.id).slice(-5)">
+                                    </h3>
+                                    <p class="text-xs"
+                                        x-text="'Programado para el: ' + new Date(message.date).toLocaleString()"> </p>
+                                </div>
+                                <p class="text-xs" x-text="'Imágenes: ' + message.images_count"></p>
+                            </div>
+                            <div id="message-programmed-controllers"
+                                x-on:click.stop="modalControllers = !modalControllers"
+                                class="w-8 h-8 text-gray-400 cursor-pointer hover:bg-gray-50 rounded-full p-2 absolute right-[1px] top-1">
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24"
+                                    aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <div x-show="modalControllers" id="modal-programmed-controllers"
+                                class="absolute bg-white rounded-lg p-2 top-10 right-0 z-10 shadow-sm">
+
+
+                                <div x-on:click.stop="$store.services.deleteProgramatedMessage(message.id)"
+                                    class="cusor-pointer flex items-center hover:bg-gray-100 rounded-xl gap-1 px-4 py-1">
+                                    <svg class="text-gray-200 h-4 w-4" stroke="currentColor" fill="currentColor"
+                                        stroke-width="0" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z">
+                                        </path>
+                                    </svg>
+                                    <p class="text-sm">Eliminar</p>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-sm" x-text="'Imágenes: ' + message.images_count"></p>
                     </summary>
-                    <div class="text-sm">
-                        <div class="my-8 text-sm">
-                            <p class="font-semibold mb-1">Mensaje: </p>
-                            <p class="text-xs" x-html="message.message"></p>
-                            
+
+                    <!-- Contenido que se muestra cuando el `details` está abierto -->
+                    <div x-show="open" class="text-sm p-4">
+                        <div class="flex flex-col gap-4">
+                            <!-- Monstrar Mensaje  -->
+                            <div>
+                                <p class="font-semibold mb-1">Cuerpo del Mensaje: </p>
+                                <p class="text-xs min-h-10" x-html="message.message"></p>
+                            </div>
+
+                            <!-- Mostrar las imágenes (si hay URLs) -->
+                            <template x-if="message.images_urls.length > 0">
+                                <div class="my-4">
+                                    <p class="font-semibold">Imágenes enviadas:</p>
+                                    <div class="flex gap-4 mt-4">
+                                        <template x-for="(url, index) in message.images_urls" :key="index">
+                                            <a :href="url" target="_blank">
+                                                <img :src="url" alt="Imagen"
+                                                    class="w-12 h-12 object-cover rounded-2xl" />
+                                            </a>
+
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+
+                            <!-- Mostrar los grupos -->
+                            <div>
+                                <p class="font-semibold pb-4">Destinatarios:</p>
+                                <div class="flex flex-col">
+
+
+                                    <template x-for="(group, index) in message.groups ?? []"
+                                        :key="group.group_name + '-' + index">
+                                        <div
+                                            class="flex items-center justify-between text-sm py-2 border-b-1 border-gray-300 px-4 hover:bg-gray-100">
+                                            <p x-text="group.group_name"></p>
+                                            <p x-text="group.status"></p>
+                                        </div>
+                                    </template>
+                                </div>
+
+                            </div>
                         </div>
 
-                        <!-- Corrección: Se asegura de que 'message.groups' no sea undefined -->
-                        <template x-for="(group, index) in message.groups ?? []" :key="group.group_name + '-' + index">
-                            <div class="flex items-center justify-between w-[30%] text-sm">
-                                <p x-text="group.group_name"></p>
-                                <p x-text="group.status"></p>
-                            </div>
-                        </template>
+
+
                     </div>
-                </details>
+                </div>
             </div>
         </template>
+
+        <div x-show="$store.services.messagesProgramatedList.length === 0" class="p-4 text-sm">
+            <p>Aquí aparecerán sus mensajes programados</p>
+        </div>
     </div>
 </div>

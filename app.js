@@ -7,8 +7,8 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
-const { profile } = require('console');
 const db = require('./db/db.js');
+const cloudinary = require('./cloudinary/cloudinaryConfig.js');
 
 //Server
 const app = express();
@@ -51,7 +51,7 @@ app.get('/dashboard', (req, res) => {
 
 // WhatsApp Client
 const client = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new NoAuth(),
     puppeteer: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--unhandled-rejections=strict'],
@@ -175,6 +175,7 @@ const getProgrammedMessages = () => {
                 mp.date AS message_date,
                 mp.message AS message_body,
                 mp.images_count AS images_count,
+                mp.images_urls AS images_urls,  -- Agregamos la columna de URLs de imágenes
                 gmp.group_name AS group_name,
                 gmp.status AS group_status
             FROM 
@@ -203,6 +204,7 @@ const getProgrammedMessages = () => {
                     date: row.message_date,
                     message: row.message_body,
                     images_count: row.images_count,
+                    images_urls: row.images_urls ? JSON.parse(row.images_urls) : [], // Parseamos las URLs de las imágenes (si están presentes)
                     groups: [],
                 };
             }
@@ -227,14 +229,15 @@ const getProgrammedMessages = () => {
 };
 
 
+
 //Handle Message
 const handleMessage = (messageObj) => {
     try {
         const message = messageObj.message;
-        const recipients = messageObj.recipients.map((recipient)=> recipient.id);
+        const recipients = messageObj.recipients.map((recipient) => recipient.id);
 
 
-        console.log(`recipientes reales:${recipients}` )
+        console.log(`recipientes reales:${recipients}`)
         const files = messageObj.files;
 
         for (const groupID of recipients) {
@@ -290,7 +293,8 @@ const handleMessage = (messageObj) => {
     }
 };
 
-const handleMessageProgramated = (messageObj) => {
+let timeoutIds = new Map(); //Variable que almacena la información de los timeouts para poder detenerlos en caso de eliminarlos
+const handleMessageProgramated = async (messageObj) => {
     try {
         const { hora, fecha } = messageObj;
 
@@ -317,20 +321,38 @@ const handleMessageProgramated = (messageObj) => {
         // Reemplazar \n con <br> antes de guardar
         const messageFormatted = message.replace(/\n/g, "<br>");
 
-        const notiTemplate = `🕐¡Mensaje programado para el día: ${dateFormated} *Cuerpo del mensaje:* "${message}", *Imagenes Enviadas:* ${files.length}, *Cantidad de Grupos:* ${recipients.length} grupos. `;
+        const notiTemplate = `🕐¡Mensaje programado para el día: ${dateFormated} *Cuerpo del mensaje:* "${message}", *Imágenes Enviadas:* ${files.length}, *Cantidad de Grupos:* ${recipients.length} grupos. `;
 
         client.sendMessage(myID, notiTemplate);
 
+        // Subir las imágenes a Cloudinary y esperar que todas se suban
+        const uploadPromises = files.map(file => new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                { resource_type: 'auto' },
+                (error, result) => {
+                    if (error) {
+                        reject('Error al subir la imagen a Cloudinary: ' + error);
+                    } else {
+                        resolve(result.secure_url);
+                    }
+                }
+            ).end(file);
+        }));
+
+        const imageUrls = await Promise.all(uploadPromises);
+
+        // Una vez todas las imágenes están subidas, proceder con la base de datos
         const insertMessage = db.prepare(`
-            INSERT INTO messagesProgrammed (date, message, images_count)
-            VALUES (?, ?, ?)
+            INSERT INTO messagesProgrammed (date, message, images_count, images_urls)
+            VALUES (?, ?, ?, ?)
         `);
         const messageResult = insertMessage.run(
-            targetDate.toISOString(), 
+            targetDate.toISOString(),
             messageFormatted, // Guardamos con <br>
-            files.length
+            files.length,
+            JSON.stringify(imageUrls) // Guardamos las URLs de las imágenes
         );
-        const messageId = messageResult.lastInsertRowid; 
+        const messageId = messageResult.lastInsertRowid;
 
         // Guardar los grupos asociados en la tabla `groupsMessagesProgrammed`
         const insertGroup = db.prepare(`
@@ -353,26 +375,74 @@ const handleMessageProgramated = (messageObj) => {
         const dataProgrammed = getProgrammedMessages();
         io.emit('get-programmed-messsages', dataProgrammed);
 
-        setTimeout(() => {
+        // Guardamos el timeoutId para este mensaje en particular
+        timeoutIds.set(messageId, setTimeout(() => {
             handleMessage(messageObj);
-        }, delay);
+
+            // Actualizar el estado de los grupos a 'Enviado'
+            recipients.forEach((group) => {
+                const updateGroup = db.prepare(`
+                    UPDATE groupsMessagesProgrammed
+                    SET status = 'Enviado'
+                    WHERE messagesProgrammed_id = ? AND group_name = ?
+                `);
+                updateGroup.run(messageId, group.name);
+            });
+
+            // Emitir la actualización de los mensajes programados
+            const dataProgrammed = getProgrammedMessages();
+            io.emit('get-programmed-messsages', dataProgrammed);
+
+        }, delay));
 
     } catch (e) {
-        console.log("Ocurrió un error en programar mensaje");
+        console.log("Ocurrió un error en programar mensaje:", e);
         io.emit('messageProgramatedState', "Error");
     }
 };
 
 
+const cancelScheduledMessage = (messageId) => {
+    if (timeoutIds.has(messageId)) {
+        const timeoutId = timeoutIds.get(messageId);
+        clearTimeout(timeoutId); // Detener el setTimeout
+        timeoutIds.delete(messageId); // Eliminarlo del Map
+        console.log(`✅ Mensaje con ID ${messageId} cancelado exitosamente.`);
+    } else {
+        console.log(`⚠️ No se encontró un mensaje con ID ${messageId} para cancelar.`);
+    }
+};
+
+
+
+
+const deleteProgramatedMessage = (messageId) => {
+    try {
+        // Primero cancelamos el setTimeout si existe
+        cancelScheduledMessage(messageId);
+
+        // Luego eliminamos el mensaje de la base de datos
+        const deleteMessageQuery = db.prepare(`
+            DELETE FROM messagesProgrammed
+            WHERE id = ?
+        `);
+        deleteMessageQuery.run(messageId);
+
+        console.log(`✅ Mensaje programado con ID: ${messageId} eliminado correctamente.`);
+        
+        // Emitimos la actualización de los mensajes programados
+        const dataProgrammed = getProgrammedMessages();
+        io.emit('get-programmed-messsages', dataProgrammed);
+        io.emit('messageProgramatedState', "Eliminado");
+    } catch (error) {
+        console.error("Ocurrió un error al eliminar el mensaje programado:", error);
+        io.emit('messageProgramatedState', "Error");
+    }
+};
 let isProcessingEndSession = false;
 let readyForEndSession = false;
 let isProcessing = false;
 let alreadyClientReady = false;
-
-
-
-
-
 const forcedSessionEnd = async () => {
 
     if (!isProcessingEndSession && readyForEndSession) {
@@ -456,7 +526,7 @@ client.on('ready', async () => {
             io.emit('isLoadingGroups', isLoadingGroups);
             groups = await getGroups();
             io.emit('groups-updated', groups);
-            alreadyClientReady = true; 
+            alreadyClientReady = true;
 
             //Get Programmed Messages
             const dataProgrammed = getProgrammedMessages();
@@ -518,6 +588,11 @@ io.on('connection', (socket) => {
     socket.on("handleMessageProgramated", (messageObj) => {
         console.log("handleMessageProgramated activado");
         handleMessageProgramated(messageObj);
+    })
+
+
+    socket.on('deleteProgramatedMessage', (id) => {
+        deleteProgramatedMessage(id);
     })
 
 

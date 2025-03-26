@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS messagesProgrammed (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   date TEXT NOT NULL,            
   message TEXT NOT NULL,           
-  images_count INTEGER NOT NULL
+  images_count INTEGER NOT NULL,
+  images_urls TEXT   -- Nueva columna para guardar las URLs de las imágenes
 );
 
 -- Tabla para los grupos
