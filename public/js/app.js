@@ -178,7 +178,7 @@ const showProgrammedMessages = (data) => {
 socket.on("get-programmed-messsages", (data) => {
     Alpine.store("services").messagesProgramatedList = data;
 
-    console.log(Alpine.store("services").messagesProgramatedList);
+    // console.log(Alpine.store("services").messagesProgramatedList);
 });
 
 
@@ -402,14 +402,14 @@ document.addEventListener('alpine:init', () => {
             if (index !== -1) {
                 // Si existe, eliminarlo
                 groups.splice(index, 1);
-                console.log("Se eliminó el grupo");
+                // console.log("Se eliminó el grupo");
             } else {
                 // Si no existe, agregarlo
                 groups.push({
                     id: groupSelected,
                     name: groupName
                 });
-                console.log("Se agregó el grupo");
+                // console.log("Se agregó el grupo");
             }
 
             // console.log(groups.map((info) => info.id));
@@ -464,8 +464,6 @@ document.addEventListener('alpine:init', () => {
 
         //Envíar mensaje programado
         handleMessageProgramated() {
-            console.log("inicao")
-
             const messageObj = {
                 message: Alpine.store("services").message,
                 files: Alpine.store("services").files,
@@ -489,7 +487,7 @@ document.addEventListener('alpine:init', () => {
                 Alpine.store("services").files = [];
                 Alpine.store("services").groupsSelected = [];
 
-                console.log("mensajes programado, y borrado estado desde el cliente")
+                // console.log("mensajes programado, y borrado estado desde el cliente")
             }
 
         },
