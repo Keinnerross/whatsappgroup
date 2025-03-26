@@ -296,9 +296,8 @@ const handleMessageProgramated = (messageObj) => {
 
         console.log(messageObj);
 
-        const [year, month, day,] = fecha.split('-').map(Number);
+        const [year, month, day] = fecha.split('-').map(Number);
         const [hours, minutes] = hora.split(':').map(Number);
-
 
         const targetDate = new Date(year, month - 1, day, hours, minutes, 0); // Crear fecha objetivo
         const now = new Date();
@@ -312,17 +311,15 @@ const handleMessageProgramated = (messageObj) => {
         }
 
         const myID = client.info.wid._serialized;
-        const { message, recipients, files } = messageObj;
-        const dateFormated = `*${day}-${month}-${year}* a las *${hours}:${minutes}Hrs*`
+        let { message, recipients, files } = messageObj;
+        const dateFormated = `*${day}-${month}-${year}* a las *${hours}:${minutes}Hrs*`;
 
+        // Reemplazar \n con <br> antes de guardar
+        const messageFormatted = message.replace(/\n/g, "<br>");
 
-
-        const notiTemplate = `🕐¡Mensaje programado para el día: ${dateFormated} *Cuerpo del mensaje:* "${message}", *Imagenes Enviadas:* ${files.length}, *Cantidad de Grupos:* ${recipients.length} grupos. `
-
-
+        const notiTemplate = `🕐¡Mensaje programado para el día: ${dateFormated} *Cuerpo del mensaje:* "${message}", *Imagenes Enviadas:* ${files.length}, *Cantidad de Grupos:* ${recipients.length} grupos. `;
 
         client.sendMessage(myID, notiTemplate);
-
 
         const insertMessage = db.prepare(`
             INSERT INTO messagesProgrammed (date, message, images_count)
@@ -330,7 +327,7 @@ const handleMessageProgramated = (messageObj) => {
         `);
         const messageResult = insertMessage.run(
             targetDate.toISOString(), 
-            message,
+            messageFormatted, // Guardamos con <br>
             files.length
         );
         const messageId = messageResult.lastInsertRowid; 
@@ -341,12 +338,10 @@ const handleMessageProgramated = (messageObj) => {
             VALUES (?, ?, ?)
         `);
 
-            
-
         recipients.forEach((group) => {
             insertGroup.run(
                 messageId, // ID del mensaje programado
-                group.name,    // Nombre del grupo
+                group.name, // Nombre del grupo
                 'Programado' // Estado inicial
             );
         });
@@ -355,19 +350,16 @@ const handleMessageProgramated = (messageObj) => {
 
         io.emit('messageProgramatedState', "Programado");
 
-
         const dataProgrammed = getProgrammedMessages();
         io.emit('get-programmed-messsages', dataProgrammed);
-
 
         setTimeout(() => {
             handleMessage(messageObj);
         }, delay);
 
     } catch (e) {
-        console.log("Ocurrio un error en programar mensaje")
+        console.log("Ocurrió un error en programar mensaje");
         io.emit('messageProgramatedState', "Error");
-
     }
 };
 

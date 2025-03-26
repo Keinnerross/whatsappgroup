@@ -1,5 +1,3 @@
-
-
 // Sockets
 const socket = io();
 
@@ -384,20 +382,28 @@ document.addEventListener('alpine:init', () => {
 
         // Maneja la selección de grupos
         handleGroupsSelected(groupSelected, groupName) {
-
             let groups = Alpine.store("services").groupsSelected;
 
+            // Buscar si ya existe un objeto con ese id
+            const index = groups.findIndex(item => item.id === groupSelected);
 
-            if (groups.includes(groupSelected)) {
-                groups.splice(groups.indexOf(groupSelected), 1);
+            if (index !== -1) {
+                // Si existe, eliminarlo
+                groups.splice(index, 1);
+                console.log("Se eliminó el grupo");
             } else {
+                // Si no existe, agregarlo
                 groups.push({
                     id: groupSelected,
                     name: groupName
                 });
+                console.log("Se agregó el grupo");
             }
 
+            // console.log(groups.map((info) => info.id));
         },
+
+
 
         // Maneja la carga de archivos
         handleFileUpload(event) {
@@ -446,6 +452,8 @@ document.addEventListener('alpine:init', () => {
 
         //Envíar mensaje programado
         handleMessageProgramated() {
+            console.log("inicao")
+
             const messageObj = {
                 message: Alpine.store("services").message,
                 files: Alpine.store("services").files,
@@ -453,6 +461,7 @@ document.addEventListener('alpine:init', () => {
                 hora: Alpine.store("services").time,
                 fecha: Alpine.store("services").date,
             }
+
 
             if (Alpine.store("services").groupsSelected.length === 0) {
                 alert("no has seleccionado ningún destinatario")

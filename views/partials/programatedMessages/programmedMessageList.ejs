@@ -1,10 +1,9 @@
 <!-- programmedMessageList -->
-
 <div>
     <div class="flex flex-col gap-2">
         <template x-for="message in [...$store.services.messagesProgramatedList].sort((a, b) => b.id - a.id)"
             :key="message.id">
-            <div class="p-4 rounded-lg shadow-sm cursor-pointer">
+            <div class="p-4 rounded-lg cursor-pointer hover:bg-gray-100">
                 <details class="list-none">
                     <summary class="list-none">
                         <div class="flex items-center gap-2">
@@ -14,22 +13,20 @@
                             </p>
                         </div>
                         <p class="text-sm" x-text="'Imágenes: ' + message.images_count"></p>
-
                     </summary>
                     <div class="text-sm">
-                        <div class=" my-8 text-sm">
+                        <div class="my-8 text-sm">
                             <p class="font-semibold mb-1">Mensaje: </p>
-                            <p class="text-xs" x-text="message.message"></p>
+                            <p class="text-xs" x-html="message.message"></p>
+                            
                         </div>
 
-                        <template x-for="group in message.groups" :key="group.group_name">
-
+                        <!-- Corrección: Se asegura de que 'message.groups' no sea undefined -->
+                        <template x-for="(group, index) in message.groups ?? []" :key="group.group_name + '-' + index">
                             <div class="flex items-center justify-between w-[30%] text-sm">
                                 <p x-text="group.group_name"></p>
                                 <p x-text="group.status"></p>
                             </div>
-
-
                         </template>
                     </div>
                 </details>
