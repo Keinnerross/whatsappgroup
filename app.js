@@ -26,7 +26,6 @@ app.use(express.static('public'));
 // Motor de plantillas
 app.set('view engine', 'ejs');
 
-
 // Socket.io
 const io = socketIo(server, {
     maxHttpBufferSize: 30 * 1024 * 1024 // 30 MB, ajusta según necesites
